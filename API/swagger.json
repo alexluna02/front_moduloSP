@@ -1,0 +1,115 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API de Seguridad",
+    "version": "1.0.0",
+    "description": "Documentación de la API de Seguridad"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    },
+    {
+      "url": "https://proyectomoduloseguridad-production.up.railway.app"
+    }
+  ],
+  "paths": {
+    "/api/usuarios": {
+      "get": {
+        "summary": "Obtener todos los usuarios",
+        "responses": {
+          "200": { 
+            "description": "Lista de usuarios"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear un usuario",
+        "responses": {
+          "201": {
+            "description": "Usuario creado"
+          }
+        }
+      }
+    },
+    "/api/usuarios/{id}": {
+      "get": {
+        "summary": "Obtener usuario por ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Usuario encontrado" },
+          "404": { "description": "Usuario no encontrado" }
+        }
+      }
+    },
+    "/api/roles": {
+      "get": {
+        "summary": "Obtener todos los roles",
+        "responses": {
+          "200": { "description": "Lista de roles" }
+        }
+      }
+    },
+    "/api/permisos": {
+      "get": {
+        "summary": "Obtener todos los permisos",
+        "responses": {
+          "200": { "description": "Lista de permisos" }
+        }
+      }
+    },
+    "/api/auditoria": {
+      "get": {
+        "summary": "Obtener todos los registros de auditoría",
+        "responses": {
+          "200": { "description": "Lista de auditoría" }
+        }
+      },
+      "post": {
+        "summary": "Crear registro de auditoría",
+        "responses": {
+          "201": { "description": "Registro creado" }
+        }
+      }
+    },
+    "/api/auditoria/{id}": {
+      "get": {
+        "summary": "Obtener registro de auditoría por ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Registro encontrado" },
+          "404": { "description": "Registro no encontrado" }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar registro de auditoría",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Registro eliminado" },
+          "404": { "description": "Registro no encontrado" }
+        }
+      }
+    }
+  }
+}
