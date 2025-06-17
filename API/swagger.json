@@ -3,7 +3,7 @@
   "info": {
     "title": "API de Seguridad",
     "version": "1.0.0",
-    "description": "Documentación de la API de Seguridad"
+    "description": "API para gestión de usuarios, roles, permisos y auditoría"
   },
   "servers": [
     {
@@ -13,9 +13,38 @@
       "url": "https://proyectomoduloseguridad-production.up.railway.app"
     }
   ],
+  "tags": [
+    {
+      "name": "Usuarios",
+      "description": "Operaciones sobre la tabla usuarios"
+    },
+    {
+      "name": "Roles",
+      "description": "Operaciones sobre la tabla roles"
+    },
+    {
+      "name": "Permisos",
+      "description": "Operaciones sobre la tabla permisos"
+    },
+    {
+      "name": "Auditoría",
+      "description": "Operaciones sobre la tabla auditoria"
+    },
+    {
+      "name": "Roles-Permisos",
+      "description": "Asignación de permisos a roles"
+    },
+    {
+      "name": "Usuarios-Roles",
+      "description": "Asignación de roles a usuarios"
+    }
+  ],
   "paths": {
     "/api/usuarios": {
       "get": {
+        "tags": [
+          "Usuarios"
+        ],
         "summary": "Obtener todos los usuarios",
         "responses": {
           "200": { 
@@ -24,6 +53,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Usuarios"
+        ],
         "summary": "Crear un usuario",
         "responses": {
           "201": {
@@ -34,6 +66,9 @@
     },
     "/api/usuarios/{id}": {
       "get": {
+        "tags": [
+          "Usuarios"
+        ],
         "summary": "Obtener usuario por ID",
         "parameters": [
           {
@@ -47,32 +82,210 @@
           "200": { "description": "Usuario encontrado" },
           "404": { "description": "Usuario no encontrado" }
         }
+      },
+      "put": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Actualizar usuario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Usuario actualizado" },
+          "404": { "description": "Usuario no encontrado" }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Eliminar usuario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Usuario eliminado" },
+          "404": { "description": "Usuario no encontrado" }
+        }
       }
     },
     "/api/roles": {
       "get": {
+        "tags": [
+          "Roles"
+        ],
         "summary": "Obtener todos los roles",
         "responses": {
           "200": { "description": "Lista de roles" }
+        }
+      },
+      "post": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Crear un rol",
+        "responses": {
+          "201": { "description": "Rol creado" }
+        }
+      }
+    },
+    "/api/roles/{id}": {
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Obtener rol por ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Rol encontrado" },
+          "404": { "description": "Rol no encontrado" }
+        }
+      },
+      "put": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Actualizar rol",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Rol actualizado" },
+          "404": { "description": "Rol no encontrado" }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Eliminar rol",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Rol eliminado" },
+          "404": { "description": "Rol no encontrado" }
         }
       }
     },
     "/api/permisos": {
       "get": {
+        "tags": [
+          "Permisos"
+        ],
         "summary": "Obtener todos los permisos",
         "responses": {
           "200": { "description": "Lista de permisos" }
+        }
+      },
+      "post": {
+        "tags": [
+          "Permisos"
+        ],
+        "summary": "Crear un permiso",
+        "responses": {
+          "201": { "description": "Permiso creado" }
+        }
+      }
+    },
+    "/api/permisos/{id}": {
+      "get": {
+        "tags": [
+          "Permisos"
+        ],
+        "summary": "Obtener permiso por ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Permiso encontrado" },
+          "404": { "description": "Permiso no encontrado" }
+        }
+      },
+      "put": {
+        "tags": [
+          "Permisos"
+        ],
+        "summary": "Actualizar permiso",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Permiso actualizado" },
+          "404": { "description": "Permiso no encontrado" }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Permisos"
+        ],
+        "summary": "Eliminar permiso",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Permiso eliminado" },
+          "404": { "description": "Permiso no encontrado" }
         }
       }
     },
     "/api/auditoria": {
       "get": {
+        "tags": [
+          "Auditoría"
+        ],
         "summary": "Obtener todos los registros de auditoría",
         "responses": {
           "200": { "description": "Lista de auditoría" }
         }
       },
       "post": {
+        "tags": [
+          "Auditoría"
+        ],
         "summary": "Crear registro de auditoría",
         "responses": {
           "201": { "description": "Registro creado" }
@@ -81,6 +294,9 @@
     },
     "/api/auditoria/{id}": {
       "get": {
+        "tags": [
+          "Auditoría"
+        ],
         "summary": "Obtener registro de auditoría por ID",
         "parameters": [
           {
@@ -95,7 +311,28 @@
           "404": { "description": "Registro no encontrado" }
         }
       },
+      "put": {
+        "tags": [
+          "Auditoría"
+        ],
+        "summary": "Actualizar registro de auditoría",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Registro actualizado" },
+          "404": { "description": "Registro no encontrado" }
+        }
+      },
       "delete": {
+        "tags": [
+          "Auditoría"
+        ],
         "summary": "Eliminar registro de auditoría",
         "parameters": [
           {
@@ -108,6 +345,46 @@
         "responses": {
           "200": { "description": "Registro eliminado" },
           "404": { "description": "Registro no encontrado" }
+        }
+      }
+    },
+    "/api/roles_permisos": {
+      "post": {
+        "tags": [
+          "Roles-Permisos"
+        ],
+        "summary": "Asignar permiso a rol",
+        "responses": {
+          "201": { "description": "Permiso asignado a rol" }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Roles-Permisos"
+        ],
+        "summary": "Quitar permiso de rol",
+        "responses": {
+          "200": { "description": "Permiso quitado de rol" }
+        }
+      }
+    },
+    "/api/usuarios_roles": {
+      "post": {
+        "tags": [
+          "Usuarios-Roles"
+        ],
+        "summary": "Asignar rol a usuario",
+        "responses": {
+          "201": { "description": "Rol asignado a usuario" }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Usuarios-Roles"
+        ],
+        "summary": "Quitar rol de usuario",
+        "responses": {
+          "200": { "description": "Rol quitado de usuario" }
         }
       }
     }

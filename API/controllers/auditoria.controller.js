@@ -39,6 +39,23 @@ const createAuditoria = async (req, res) => {
   }
 };
 
+// Actualizar registro de auditoría
+const updateAuditoria = async (req, res) => {
+  const { id } = req.params;
+  const { accion, tabla, id_usuario, id_rol, details, modulo } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE auditoria SET accion = $1, tabla = $2, id_usuario = $3, id_rol = $4, details = $5, modulo = $6 WHERE id = $7 RETURNING *',
+      [accion, tabla, id_usuario, id_rol, details, modulo, id]
+    );
+    if (result.rows.length === 0) return res.status(404).send('Registro no encontrado');
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error del servidor');
+  }
+};
+
 // Eliminar registro de auditoría
 const deleteAuditoria = async (req, res) => {
   const { id } = req.params;
@@ -59,5 +76,6 @@ module.exports = {
   getAllAuditoria,
   getAuditoriaById,
   createAuditoria,
+  updateAuditoria,
   deleteAuditoria
 };
