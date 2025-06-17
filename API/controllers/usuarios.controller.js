@@ -84,10 +84,34 @@ const deleteUsuario = async (req, res) => {
   }
 };
 
+const loginUsuario = async (req, res) => {
+  const { usuario, contrasena } = req.body;
+  try {
+    const result = await pool.query(
+      'SELECT * FROM usuarios WHERE usuario = $1',
+      [usuario]
+    );
+    if (result.rows.length === 0) {
+      return res.status(401).send('Usuario o contraseña incorrectos');
+    }
+    const user = result.rows[0];
+    // Si usas contraseñas hasheadas, aquí deberías comparar usando bcrypt
+    if (user.contrasena !== contrasena) {
+      return res.status(401).send('Usuario o contraseña incorrectos');
+    }
+    // Aquí puedes generar un token JWT si lo deseas
+    res.json({ mensaje: 'Login exitoso', usuario: user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error del servidor');
+  }
+};
+
 module.exports = {
   getAllUsuarios,
   getUsuarioById,
   createUsuario,
   updateUsuario,
-  deleteUsuario
+  deleteUsuario,
+  loginUsuario
 };
