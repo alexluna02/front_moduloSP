@@ -6,11 +6,9 @@
     "description": "API para gestión de usuarios, roles, permisos y auditoría"
   },
   "servers": [
+   
     {
-      "url": "http://localhost:3000"
-    },
-    {
-      "url": "https://proyectomoduloseguridad-production.up.railway.app"
+      "url": "https://modulo-seguridad.onrender.com/"
     }
   ],
   "tags": [
