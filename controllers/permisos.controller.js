@@ -3,7 +3,7 @@ const pool = require('../db');
 // Obtener todos los permisos
 const getAllPermisos = async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM permisos');
+    const result = await pool.query('SELECT * FROM permisos ORDER BY id_permiso');
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -26,11 +26,16 @@ const getPermisoById = async (req, res) => {
 
 // Crear permiso
 const createPermiso = async (req, res) => {
-  const { nombre_permiso, descripcion } = req.body;
+  const { nombre_permiso, descripcion, estado } = req.body;
+
+  if (typeof estado !== 'boolean') {
+    return res.status(400).send('El campo "estado" debe ser booleano');
+  }
+
   try {
     const result = await pool.query(
-      'INSERT INTO permisos (nombre_permiso, descripcion) VALUES ($1, $2) RETURNING *',
-      [nombre_permiso, descripcion]
+      'INSERT INTO permisos (nombre_permiso, descripcion, estado) VALUES ($1, $2, $3) RETURNING *',
+      [nombre_permiso, descripcion, estado]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -46,11 +51,16 @@ const createPermiso = async (req, res) => {
 // Actualizar permiso
 const updatePermiso = async (req, res) => {
   const { id } = req.params;
-  const { nombre_permiso, descripcion } = req.body;
+  const { nombre_permiso, descripcion, estado } = req.body;
+
+  if (typeof estado !== 'boolean') {
+    return res.status(400).send('El campo "estado" debe ser booleano');
+  }
+
   try {
     const result = await pool.query(
-      'UPDATE permisos SET nombre_permiso = $1, descripcion = $2 WHERE id_permiso = $3 RETURNING *',
-      [nombre_permiso, descripcion, id]
+      'UPDATE permisos SET nombre_permiso = $1, descripcion = $2, estado = $3 WHERE id_permiso = $4 RETURNING *',
+      [nombre_permiso, descripcion, estado, id]
     );
     if (result.rows.length === 0) return res.status(404).send('Permiso no encontrado');
     res.json(result.rows[0]);
