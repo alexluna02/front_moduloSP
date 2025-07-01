@@ -1,8 +1,19 @@
-const pool = require('../db'); // Asume que tienes un archivo de configuración de DB
+const pool = require('../db');
+const { registrarAuditoria } = require('../controllers/auditoria.controller');
 
 const getAllUsuarios = async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM usuarios');
+
+    await registrarAuditoria({
+      accion: 'SELECT',
+      modulo: 'seguridad',
+      tabla: 'usuarios',
+      id_usuario: req.usuario?.id_usuario || null,
+      details: { consulta: 'SELECT * FROM usuarios' },
+      nombre_rol: req.usuario?.nombre_rol || 'Sistema'
+    });
+
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -17,6 +28,16 @@ const getUsuarioById = async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).send('Usuario no encontrado');
     }
+
+    await registrarAuditoria({
+      accion: 'SELECT',
+      modulo: 'seguridad',
+      tabla: 'usuarios',
+      id_usuario: req.usuario?.id_usuario || null,
+      details: { consulta: 'SELECT * FROM usuarios WHERE id_usuario = $1', parametros: [id] },
+      nombre_rol: req.usuario?.nombre_rol || 'Sistema'
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -24,7 +45,6 @@ const getUsuarioById = async (req, res) => {
   }
 };
 
-// Crear usuario
 const createUsuario = async (req, res) => {
   const { usuario, contrasena, estado } = req.body;
   try {
@@ -32,10 +52,20 @@ const createUsuario = async (req, res) => {
       'INSERT INTO usuarios (usuario, contrasena, estado) VALUES ($1, $2, $3) RETURNING *',
       [usuario, contrasena, estado ?? true]
     );
+
+    await registrarAuditoria({
+      accion: 'INSERT',
+      modulo: 'seguridad',
+      tabla: 'usuarios',
+      id_usuario: req.usuario?.id_usuario || null,
+      details: result.rows[0],
+      nombre_rol: req.usuario?.nombre_rol || 'Sistema'
+    });
+
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
-    if (err.code === '23505') { // Unique violation
+    if (err.code === '23505') {
       res.status(400).send('El usuario ya existe');
     } else {
       res.status(500).send('Error del servidor');
@@ -43,7 +73,6 @@ const createUsuario = async (req, res) => {
   }
 };
 
-// Actualizar usuario
 const updateUsuario = async (req, res) => {
   const { id } = req.params;
   const { usuario, contrasena, estado } = req.body;
@@ -55,6 +84,16 @@ const updateUsuario = async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).send('Usuario no encontrado');
     }
+
+    await registrarAuditoria({
+      accion: 'UPDATE',
+      modulo: 'seguridad',
+      tabla: 'usuarios',
+      id_usuario: req.usuario?.id_usuario || null,
+      details: result.rows[0],
+      nombre_rol: req.usuario?.nombre_rol || 'Sistema'
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -66,7 +105,6 @@ const updateUsuario = async (req, res) => {
   }
 };
 
-// Eliminar usuario
 const deleteUsuario = async (req, res) => {
   const { id } = req.params;
   try {
@@ -77,6 +115,22 @@ const deleteUsuario = async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).send('Usuario no encontrado');
     }
+
+    try {
+      await registrarAuditoria({
+        accion: 'DELETE',
+        modulo: 'seguridad',
+        tabla: 'usuarios',
+        id_usuario: req.usuario?.id_usuario || null,
+        details: result.rows[0],
+        nombre_rol: req.usuario?.nombre_rol || 'Sistema'
+      });
+    } catch (auditError) {
+      console.error('Error al registrar auditoría:', auditError.message);
+      // Opcional: Descomenta para fallar si la auditoría falla
+      // throw new Error('Fallo al registrar la auditoría');
+    }
+
     res.json({ mensaje: 'Usuario eliminado correctamente' });
   } catch (err) {
     console.error(err);
@@ -95,11 +149,19 @@ const loginUsuario = async (req, res) => {
       return res.status(401).send('Usuario o contraseña incorrectos');
     }
     const user = result.rows[0];
-    // Si usas contraseñas hasheadas, aquí deberías comparar usando bcrypt
     if (user.contrasena !== contrasena) {
       return res.status(401).send('Usuario o contraseña incorrectos');
     }
-    // Aquí puedes generar un token JWT si lo deseas
+
+    await registrarAuditoria({
+      accion: 'LOGIN',
+      modulo: 'seguridad',
+      tabla: 'usuarios',
+      id_usuario: user.id_usuario,
+      details: { usuario: user.usuario },
+      nombre_rol: req.usuario?.nombre_rol || 'Sistema'
+    });
+
     res.json({ mensaje: 'Login exitoso', usuario: user });
   } catch (err) {
     console.error(err);

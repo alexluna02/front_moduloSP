@@ -1,9 +1,20 @@
 const pool = require('../db');
+const { registrarAuditoria } = require('../controllers/auditoria.controller');
 
 // Obtener todos los permisos
 const getAllPermisos = async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM permisos ORDER BY id_permiso');
+
+    await registrarAuditoria({
+      accion: 'SELECT',
+      modulo: 'seguridad',
+      tabla: 'permisos',
+      id_usuario: req.usuario?.id_usuario || null,
+      details: { consulta: 'SELECT * FROM permisos' },
+      nombre_rol: req.usuario?.nombre_rol || 'Sistema'
+    });
+
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -17,6 +28,16 @@ const getPermisoById = async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM permisos WHERE id_permiso = $1', [id]);
     if (result.rows.length === 0) return res.status(404).send('Permiso no encontrado');
+
+    await registrarAuditoria({
+      accion: 'SELECT',
+      modulo: 'seguridad',
+      tabla: 'permisos',
+      id_usuario: req.usuario?.id_usuario || null,
+      details: { consulta: 'SELECT * FROM permisos WHERE id_permiso = $1', parametros: [id] },
+      nombre_rol: req.usuario?.nombre_rol || 'Sistema'
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -37,6 +58,16 @@ const createPermiso = async (req, res) => {
       'INSERT INTO permisos (nombre_permiso, descripcion, estado) VALUES ($1, $2, $3) RETURNING *',
       [nombre_permiso, descripcion, estado]
     );
+
+    await registrarAuditoria({
+      accion: 'INSERT',
+      modulo: 'seguridad',
+      tabla: 'permisos',
+      id_usuario: req.usuario?.id_usuario || null,
+      details: result.rows[0],
+      nombre_rol: req.usuario?.nombre_rol || 'Sistema'
+    });
+
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -63,6 +94,16 @@ const updatePermiso = async (req, res) => {
       [nombre_permiso, descripcion, estado, id]
     );
     if (result.rows.length === 0) return res.status(404).send('Permiso no encontrado');
+
+    await registrarAuditoria({
+      accion: 'UPDATE',
+      modulo: 'seguridad',
+      tabla: 'permisos',
+      id_usuario: req.usuario?.id_usuario || null,
+      details: result.rows[0],
+      nombre_rol: req.usuario?.nombre_rol || 'Sistema'
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -83,6 +124,16 @@ const deletePermiso = async (req, res) => {
       [id]
     );
     if (result.rows.length === 0) return res.status(404).send('Permiso no encontrado');
+
+    await registrarAuditoria({
+      accion: 'DELETE',
+      modulo: 'seguridad',
+      tabla: 'permisos',
+      id_usuario: req.usuario?.id_usuario || null,
+      details: result.rows[0],
+      nombre_rol: req.usuario?.nombre_rol || 'Sistema'
+    });
+
     res.json({ mensaje: 'Permiso eliminado correctamente' });
   } catch (err) {
     console.error(err);
