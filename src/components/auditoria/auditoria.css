@@ -1,0 +1,63 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #ffffff, #000000);
+  color: #fff;
+}
+
+.contenedorindex {
+  display: flex;
+  min-height: 100vh;
+}
+
+.menuindex {
+  width: 260px;
+  background: linear-gradient(135deg, #000000, #ffffff);
+  padding: 2rem 1rem;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.4);
+  border-right: 1px solid #2e2e3e;
+}
+
+.menuindex h2 {
+  text-align: center;
+  color: #00f2ff;
+  margin-bottom: 2rem;
+  font-size: 1.5rem;
+  letter-spacing: 1px;
+}
+
+.menuindex ul {
+  list-style: none;
+  padding: 0;
+}
+
+.menuindex li {
+  padding: 1rem;
+  margin: 0.5rem 0;
+  border-radius: 10px;
+  background: #fcfcfc;
+  color: #000000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.menuindex li:hover {
+  background: #00f2ff;
+  color: #000;
+  transform: translateX(5px);
+}
+
+.menuindex li i {
+  margin-right: 10px;
+  font-size: 1.2rem;
+}
+
+.contenidoindex {
+  flex: 1;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(6px);
+  border-radius: 0 0 10px 10px;
+}

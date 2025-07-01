@@ -1,0 +1,105 @@
+/* Contenedor general centrado */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Caja del login */
+.login-box {
+    background: linear-gradient(135deg, #000000, #ffffff);
+  padding: 30px 25px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  width: 320px;
+  text-align: center;
+}
+
+/* Título */
+.login-box h2 {
+  margin: 0 0 8px;
+  color:#ffffff;
+  font-size: 24px;
+}
+
+/* Subtítulo */
+.login-box p {
+  margin: 0 0 20px;
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+/* Agrupador de inputs */
+.input-group {
+  text-align: left;
+  margin-bottom: 18px;
+}
+
+/* Etiquetas */
+.input-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+/* Campos de texto */
+.input-group input,
+.input-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #000000;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: linear-gradient(135deg, #000000, #ffffff);
+  transition: border-color 0.3s;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  border-color: #1da1f2;
+  outline: none;
+  background-color: linear-gradient(135deg, #000000, #ffffff);
+}
+
+/* Botón de login */
+button {
+  width: 100%;
+  padding: 12px;
+  background-color: #1da1f2;
+  color: rgb(2, 2, 2);
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #1991e2;
+}
+
+/* Mensaje de error o éxito */
+.message {
+  margin-top: 12px;
+  color: #d32f2f;
+  font-size: 14px;
+}
+
+/* Nota inferior */
+.secure-note {
+  font-size: 12px;
+  color: #000000;
+  margin-top: 10px;
+}
+
+.footer {
+  font-size: 12px;
+  color: #000000;
+  margin-top: 20px;
+}
