@@ -105,6 +105,15 @@ const AuditList = () => {
     setDetailsModalOpen(true);
   };
 
+  // Convierte el objeto de detalles en un arreglo de pares clave-valor
+  const detailsToRows = (details) => {
+    if (!details || typeof details !== 'object') return [];
+    return Object.entries(details).map(([key, value]) => ({
+      key,
+      value: typeof value === 'object' ? JSON.stringify(value) : String(value),
+    }));
+  };
+
   const columns = [
     
     {
@@ -227,13 +236,17 @@ const AuditList = () => {
         destroyOnHidden
       >
         <Spin spinning={loading}>
-          <Form layout="vertical">
-            <Form.Item label="Detalles">
-              <pre style={{ whiteSpace: 'pre-wrap' }}>
-                {JSON.stringify(selectedDetails, null, 2)}
-              </pre>
-            </Form.Item>
-          </Form>
+          <Table
+            dataSource={detailsToRows(selectedDetails)}
+            columns={[
+              { title: 'Campo', dataIndex: 'key', key: 'key' },
+              { title: 'Valor', dataIndex: 'value', key: 'value' },
+            ]}
+            pagination={false}
+            size="small"
+            rowKey="key"
+            locale={{ emptyText: 'Sin detalles' }}
+          />
         </Spin>
       </Modal>
     </div>
