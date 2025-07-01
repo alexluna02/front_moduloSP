@@ -5,8 +5,5 @@ const auditoriaController = require('../controllers/auditoria.controller');
 // Endpoints para auditoría
 router.get('/', auditoriaController.getAllAuditoria);
 router.get('/:id', auditoriaController.getAuditoriaById);
-router.post('/', auditoriaController.createAuditoria);
-router.put('/:id', auditoriaController.updateAuditoria); // <-- Agregado endpoint PUT
-router.delete('/:id', auditoriaController.deleteAuditoria);
-
+//Export
 module.exports = router;
