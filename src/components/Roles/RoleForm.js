@@ -8,7 +8,36 @@ import CustomAlert from '../Alert.js';
 import { Select } from 'antd';
 import Inicio from '../seguridad/Inicio.js'
 const { Option } = Select;
+export const listarRoles = async () => {
+    try {
+        const res = await fetch('/api/roles');
+        const data = await res.json();
+        return data;
+    } catch (err) {
+        console.error('Error al cargar roles:', err);
+        throw err; // así puedes manejar el error donde la llames
+    }
+};
 
+export const crearRol = async (roleData) => {
+    try {
+        const res = await fetch('/api/roles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(roleData),
+        });
+
+        if (!res.ok) {
+            throw new Error('Error en la respuesta del servidor');
+        }
+
+        const data = await res.json();
+        return { success: true, data }; // éxito
+    } catch (error) {
+        console.error('Error al crear el rol:', error);
+        return { success: false, error }; // error
+    }
+};
 
 const RoleAdmin = () => {
     const [estado, setEstado] = useState(true); 

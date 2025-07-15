@@ -121,3 +121,16 @@
 .ant-table-tbody > tr:hover {
   background-color: #f0f0f0;
 }
+
+.custom-button {
+    background-color: #40a9ff;
+    border-color: #1a1a1a;
+    color: white;
+}
+
+    .custom-button:hover,
+    .custom-button:focus {
+        background-color: #1890ff;
+        border-color: #1a1a1a;
+        color: white;
+    }

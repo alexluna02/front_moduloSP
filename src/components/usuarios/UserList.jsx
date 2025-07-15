@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './usuario.css';
-import { Table, Button, Input, Modal, Form, Select, Spin } from 'antd';
+import { Table, Button, Input, Modal, Form, Select, Spin,Alert } from 'antd';
 import { FaSearch, FaEdit, FaTrash, FaUserPlus } from 'react-icons/fa';
+import '@ant-design/icons';
 import Inicio from '../seguridad/Inicio';
 import CustomAlert from '../Alert';
+import { listarRoles,crearRol } from '../Roles/RoleForm.js';
+
 
 const { Option } = Select;
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
@@ -16,7 +19,13 @@ const UserList = () => {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [form] = Form.useForm();
+    const [form] = Form.useForm();
+    const [formRol] = Form.useForm();
+    const [roles, setRoles] = useState([]);
+    const [nombreRol, setNombreRol] = useState('');
+    const [descripcion, setDescripcion] = useState('');
+    const [estado, setEstado] = useState(true); 
+    const [isRolModalOpen, setIsRolModalOpen] = useState(false);
 
   // Obtener usuarios
   const fetchUsers = async () => {
@@ -36,7 +45,23 @@ const UserList = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
+      fetchUsers();
+
+      setLoading(true);
+      listarRoles()
+          .then((data) => {
+              setRoles(data);
+          })
+          .catch(() => {
+              setAlert({
+                  type: 'error',
+                  message: '¡Operación fallida!',
+                  description: 'Error al cargar roles.',
+              });
+          })
+          .finally(() => {
+              setLoading(false);
+          });
   }, []);
 
   // Filtrar búsqueda
@@ -45,6 +70,40 @@ const UserList = () => {
       String(u[field]).toLowerCase().includes(searchText.toLowerCase())
     )
   );
+
+    const handleCrearRol = async () => {
+        try {
+            setLoading(true);
+            const values = await formRol.validateFields(); // ✅ validación
+            const resultado = await crearRol(values);   // 📡 petición al backend
+
+            if (resultado.success) {
+                setAlert({
+                    type: 'success',
+                    message: '¡Operación exitosa!',
+                    description: 'El rol fue creado correctamente.',
+                });
+                listarRoles()
+                    .then((data) => {
+                        setRoles(data);
+                    })          // 🔄 actualiza la lista
+                setIsRolModalOpen(false);  // 🔒 cierra el modal
+                formRol.resetFields();      // 🧼 limpia el formulario
+            } else {
+                throw new Error('Error en la creación del rol');
+            }
+        } catch (error) {
+            setAlert({
+                type: 'error',
+                message: '¡Operación fallida!',
+                description: 'No se pudo crear el rol.',
+            });
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
   // Eliminar usuario
   const handleDelete = async (id) => {
@@ -76,7 +135,8 @@ const UserList = () => {
     if (user) {
       form.setFieldsValue({
         usuario: user.usuario,
-        contrasena: user.contrasena,
+          contrasena: user.contrasena,
+          nombre: user.nombre,
         estado: user.estado,
       });
     } else {
@@ -100,13 +160,37 @@ const UserList = () => {
           description: 'Los datos del usuario fueron actualizados correctamente.',
         });
       } else {
-        // Crear usuario
-        await axios.post(`${API_URL}/usuarios`, values);
+          // Crear usuario
+          console.log('Payload usuario:', {
+              usuario: values.usuario,
+              contrasena: values.contrasena,
+              nombre: values.nombre,
+              estado: values.estado
+          });
+          const res = await axios.post(`${API_URL}/usuarios`, values);
+
+          const id_usuario = res.data.id_usuario;
+          // Asignar el rol al usuario
+          console.log('Payload relación usuario-rol:', {
+              id_usuario,
+              id_rol: values.rol
+          });
+
+          await axios.post(`${API_URL}/usuarios_roles`, {
+              id_usuario,
+              id_rol: values.rol,
+          });
+
+          form.resetFields();
+          setModalOpen(false);
+
         setAlert({
           type: 'success',
           message: 'Usuario creado',
           description: 'Nuevo usuario agregado correctamente.',
         });
+          
+
       }
 
       fetchUsers();
@@ -151,7 +235,12 @@ const UserList = () => {
       title: 'Usuario',
       dataIndex: 'usuario',
       key: 'usuario',
-    },
+      },
+      {
+          title: 'Nombre',
+          dataIndex: 'nombre',
+          key: 'nombre',
+      },
     {
       title: 'Estado',
       dataIndex: 'estado',
@@ -216,7 +305,16 @@ const UserList = () => {
           destroyOnHidden
         >
           <Spin spinning={loading}>
-            <Form form={form} layout="vertical">
+                  <Form form={form} layout="vertical">
+
+                      <Form.Item
+                          label="Nombre"
+                          name="nombre"
+                          rules={[{ required: true, message: 'El nombre es obligatorio' }]}
+                      >
+                          <Input placeholder="Ingrese el nombre completo" />
+                      </Form.Item>
+
               <Form.Item
                 label="Usuario"
                 name="usuario"
@@ -229,18 +327,57 @@ const UserList = () => {
                 ]}
               >
                 <Input placeholder="Ingrese el nombre de usuario" />
-              </Form.Item>
+                      </Form.Item>
 
-              <Form.Item
-                label="Contraseña"
-                name="contrasena"
-                rules={[
-                  { required: true, message: 'La contraseña es obligatoria' },
-                  { min: 6, message: 'La contraseña debe tener al menos 6 caracteres' },
-                ]}
-              >
-                <Input.Password placeholder="Ingrese la contraseña" />
-              </Form.Item>
+                      <Form.Item
+                          label="Contraseña"
+                          name="contrasena"
+                          rules={[
+                              { required: true, message: 'La contraseña es obligatoria' },
+                              { min: 6, message: 'La contraseña debe tener al menos 6 caracteres' },
+                          ]}
+                      >
+                          <Input.Password placeholder="Ingrese la contraseña" />
+                      </Form.Item>
+
+                      
+                          <Form.Item label="Rol" name="rol" rules={[{ required: true, message: 'Selecciona un rol' }]}>
+                          <Select placeholder="Selecciona un rol" style={{ width: '100%' }}>
+                              {roles.map(rol => (
+                                  <Select.Option key={rol.id_rol} value={rol.id_rol}>
+                                      {rol.nombre_rol}
+                                  </Select.Option>
+                              ))}
+                          </Select>
+                      </Form.Item>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                          <Button onClick={() => setIsRolModalOpen(true)} className="custom-button">Agregar nuevo rol</Button>
+
+                          <Modal
+                              title="Crear Rol"
+                              open={isRolModalOpen}
+                              onOk={handleCrearRol }
+                              onCancel={() => setIsRolModalOpen(false)}
+                              confirmLoading={loading}
+                              okText="Crear Rol"
+                          >
+                              {alert && <Alert type={alert.type} message={alert.message} description={alert.description} />}
+                              <Form form={formRol} layout="vertical">
+                                  <Form.Item name="nombre_rol" label="Nombre del Rol" rules={[{ required: true, message: 'Este campo es obligatorio' }]}>
+                                      <Input placeholder="Ej. Administrador" />
+                                  </Form.Item>
+                                  <Form.Item name="descripcion" label="Descripción">
+                                      <Input placeholder="Ej. Acceso completo al sistema" />
+                                  </Form.Item>
+                                  <Form.Item label="Estado">
+                                      <Select value={estado} onChange={(value) => setEstado(value)}>
+                                          <Option value={true}>Activo</Option>
+                                          <Option value={false}>Inactivo</Option>
+                                      </Select>
+                                  </Form.Item>
+                              </Form>
+                          </Modal>
+                      </div>
 
               <Form.Item label="Estado" name="estado" initialValue={true}>
                 <Select>
