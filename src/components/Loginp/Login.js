@@ -53,7 +53,7 @@ function Login() {
       const response = await fetch('http://localhost:3000/api/usuarios/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario, contrasena, id_modulo: 'SEG' }),
+        body: JSON.stringify({ usuario, contrasena, id_modulo: 'FAC' }),
       });
 
       if (response.ok) {
