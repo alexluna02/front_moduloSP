@@ -37,8 +37,8 @@ const PermisosList = () => {
   }, []);
 
   const filteredPermisos = permisos.filter((permiso) =>
-    ['nombre_permiso', 'descripcion'].some((field) =>
-      permiso[field].toLowerCase().includes(searchText.toLowerCase())
+    ['nombre_permiso', 'descripcion', 'url_permiso', 'id_modulo'].some((field) =>
+      permiso[field] ? permiso[field].toString().toLowerCase().includes(searchText.toLowerCase()) : false
     )
   );
 
@@ -78,8 +78,6 @@ const PermisosList = () => {
   const handleModalSubmit = async () => {
     try {
       const values = await form.validateFields();
-      values.estado = values.estado === true || values.estado === 'true';
-
       setLoading(true);
       if (editingPermiso) {
         await axios.put(`${API_URL}/permisos/${editingPermiso.id_permiso}`, values);
@@ -99,6 +97,7 @@ const PermisosList = () => {
       fetchPermisos();
       setModalOpen(false);
     } catch (error) {
+      console.error('Error en handleModalSubmit:', error); // Depuración
       setAlert({
         type: 'error',
         message: 'Error al guardar permiso',
@@ -137,14 +136,14 @@ const PermisosList = () => {
       key: 'descripcion',
     },
     {
-      title: 'Estado',
-      dataIndex: 'estado',
-      key: 'estado',
-      render: (estado) => (
-        <span className={estado ? 'status active' : 'status inactive'}>
-          {estado ? 'Activo' : 'Inactivo'}
-        </span>
-      ),
+      title: 'URL Permiso',
+      dataIndex: 'url_permiso',
+      key: 'url_permiso',
+    },
+    {
+      title: 'ID Módulo',
+      dataIndex: 'id_modulo',
+      key: 'id_modulo',
     },
   ];
 
@@ -186,7 +185,7 @@ const PermisosList = () => {
         onCancel={() => setModalOpen(false)}
         onOk={handleModalSubmit}
         okText={editingPermiso ? 'Actualizar' : 'Crear'}
-        destroyOnHidden
+        destroyOnClose
       >
         <Spin spinning={loading}>
           <Form form={form} layout="vertical">
@@ -204,25 +203,21 @@ const PermisosList = () => {
               rules={[{ required: true, message: 'La descripción es obligatoria' }]}
             >
               <Input.TextArea placeholder="Ej: Permite crear un nuevo usuario" rows={3} />
-              
             </Form.Item>
-                    
-
-            
-
             <Form.Item
-                    label="Estado"
-                    name="estado"
-                    initialValue={true}
-                    getValueFromEvent={(value) => value === true || value === 'true'} // 🔁 convierte string a boolean
-                >
-                <Select>
-                     <Option value={true}>Activo</Option>
-                     <Option value={false}>Inactivo</Option>
-                </Select>
+              label="URL Permiso"
+              name="url_permiso"
+              rules={[{ required: true, message: 'La URL es obligatoria' }]}
+            >
+              <Input placeholder="Ej: /usuarios/crear" />
             </Form.Item>
-
-
+            <Form.Item
+              label="ID Módulo"
+              name="id_modulo"
+              rules={[{ required: true, message: 'El ID del módulo es obligatorio' }]}
+            >
+              <Input placeholder="Ej: 1" />
+            </Form.Item>
 
           </Form>
         </Spin>

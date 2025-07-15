@@ -5,7 +5,7 @@ import UserList from './components/usuarios/UserList';
 import RoleForm from './components/Roles/RoleForm';
 import Inicio from './components/seguridad/Inicio';
 import Login from './components/Loginp/Login';
-import Principal from './components/seguridad/Inicio'; // <== IMPORTANTE
+import Principal from './components/seguridad/Inicio'; 
 import PermisosList from './components/permisos/permiso';
 import AuditList from './components/auditoria/auditoria';
 import './App.css'; 
