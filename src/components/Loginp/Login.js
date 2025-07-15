@@ -1,52 +1,87 @@
-import React, { useState } from 'react';
-import './login.css'; // Asegúrate de tener este archivo
+import React, { useEffect, useState } from 'react';
 
 function Login() {
   const [usuario, setUsuario] = useState('');
   const [contrasena, setContrasena] = useState('');
-  const [modulo, setModulo] = useState('');
   const [mensaje, setMensaje] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const loginStyles = document.createElement('link');
+    loginStyles.rel = 'stylesheet';
+    loginStyles.href = '/login.css';
+    document.head.appendChild(loginStyles);
+    return () => {
+      document.head.removeChild(loginStyles);
+    };
+  }, []);
+
+  const handleLoginError = async (response) => {
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      const text = await response.text();
+      if (response.status === 401) {
+        return text.includes('Usuario o contraseña incorrectos')
+          ? 'El usuario no existe o la contraseña es incorrecta'
+          : 'Error de autenticación';
+      }
+      return 'Error en el formato de la respuesta del servidor';
+    }
+
+    if (response.status === 401) {
+      return data.mensaje && data.mensaje.includes('Usuario o contraseña incorrectos')
+        ? 'El usuario no existe o la contraseña es incorrecta'
+        : 'Error de autenticación';
+    }
+    return data.mensaje || 'Error desconocido en el servidor';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensaje('');
+    setIsLoading(true);
+
+    if (!usuario || !contrasena) {
+      setMensaje('Por favor, completa los campos de usuario y contraseña');
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const response = await fetch('https://modulo-seguridad.onrender.com/api/usuarios/login', {
+      const response = await fetch('http://localhost:3000/api/usuarios/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario, contrasena }), // El backend no requiere módulo
+        body: JSON.stringify({ usuario, contrasena, id_modulo: 'SEG' }),
       });
 
-      const data = await response.json();
-
       if (response.ok) {
-        setMensaje('Login exitoso');
-        localStorage.setItem('modulo', modulo);
-        localStorage.setItem('usuario', usuario);
+        const data = await response.json();
 
-        // Redirección según el módulo
-        switch (modulo) {
-          case 'ventas':
-            window.location.href = '/ventas';
-            break;
-          case 'compras':
-            window.location.href = '/compras';
-            break;
-          case 'cuentas':
-            window.location.href = '/cuentas';
-            break;
-          case 'inventario':
-            window.location.href = '/inventario';
-            break;
-          default:
-            setMensaje('Módulo no reconocido');
+        if (!data.token) {
+          setMensaje('No se recibió token de autenticación');
+          setIsLoading(false);
+          return;
         }
+
+        // Guardar token y usuario
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('usuario', JSON.stringify(data.usuario || { usuario }));
+
+        setMensaje('Login exitoso');
+
+        // Redirigir a inicio u otra ruta protegida
+        window.location.href = 'http://localhost:3001/';
       } else {
-        setMensaje(data.message || 'Usuario o contraseña incorrectos');
+        const errorMsg = await handleLoginError(response);
+        setMensaje(errorMsg);
       }
     } catch (error) {
-      setMensaje('Error de conexión');
+      console.error('Error en el login:', error);
+      setMensaje('Error de conexión o servidor');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -60,10 +95,11 @@ function Login() {
             <label>Usuario</label>
             <input
               type="text"
-              placeholder="usuario"
+              placeholder="Ingresa tu usuario"
               value={usuario}
-              onChange={e => setUsuario(e.target.value)}
+              onChange={(e) => setUsuario(e.target.value.trim())}
               required
+              disabled={isLoading}
             />
           </div>
           <div className="input-group">
@@ -72,27 +108,20 @@ function Login() {
               type="password"
               placeholder="••••••••"
               value={contrasena}
-              onChange={e => setContrasena(e.target.value)}
+              onChange={(e) => setContrasena(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
-
-          <div className="input-group">
-            <label>Selecciona el Módulo</label>
-            <select value={modulo} onChange={(e) => setModulo(e.target.value)} required>
-              <option value="">-- Selecciona un módulo --</option>
-              <option value="ventas">Ventas</option>
-              <option value="compras">Compras</option>
-              <option value="cuentas">Cuentas por Cobrar</option>
-              <option value="inventario">Inventario</option>
-            </select>
-          </div>
-
-          <button type="submit">Iniciar Sesión</button>
-
-          {mensaje && <p className="message">{mensaje}</p>}
+          <button type="submit" disabled={isLoading}>
+            {isLoading ? 'Cargando...' : 'Iniciar Sesión'}
+          </button>
+          {mensaje && (
+            <p className={mensaje.toLowerCase().includes('exitoso') ? 'message success' : 'message error'}>
+              {mensaje}
+            </p>
+          )}
         </form>
-
         <p className="secure-note">Conexión segura protegida con SSL</p>
         <p className="footer">© 2025 Sistema de Seguridad. Todos los derechos reservados.</p>
       </div>

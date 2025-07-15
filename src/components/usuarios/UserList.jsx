@@ -133,11 +133,14 @@ const UserList = () => {
   const openModal = (user = null) => {
     setEditingUser(user);
     if (user) {
+      // Obtener el rol del usuario (asumiendo que viene como user.rol o user.id_rol)
+      // Si no viene, deberás obtenerlo de la API y asignarlo aquí
       form.setFieldsValue({
         usuario: user.usuario,
-          contrasena: user.contrasena,
-          nombre: user.nombre,
+        contrasena: user.contrasena,
+        nombre: user.nombre,
         estado: user.estado,
+        rol: user.rol || user.id_rol // Ajusta según la estructura de tu API
       });
     } else {
       form.resetFields();
