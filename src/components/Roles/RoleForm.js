@@ -40,7 +40,7 @@ export const crearRol = async (roleData) => {
 };
 
 const RoleAdmin = () => {
-    const [estado, setEstado] = useState(true); 
+    const [estado, setEstado] = useState(true);
     const [roles, setRoles] = useState([]);
     const [nombreRol, setNombreRol] = useState('');
     const [descripcion, setDescripcion] = useState('');
@@ -75,20 +75,20 @@ const RoleAdmin = () => {
     );
 
 
-        const [currentPage, setCurrentPage] = useState(1);
-        const [pageSize, setPageSize] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
 
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
     const paginatedRoles = roles.slice(startIndex, endIndex);
 
 
- /*   const handleChangeNombre = (e) => {
-        const valor = e.target.value;
-        setNombreRol(valor);
-        setErrorNombre(validarNombre(valor));
-    };
-    */
+    /*   const handleChangeNombre = (e) => {
+           const valor = e.target.value;
+           setNombreRol(valor);
+           setErrorNombre(validarNombre(valor));
+       };
+       */
     // Funci�n para traer el listado de roles
     const fetchRoles = () => {
         fetch('/api/roles')
@@ -104,10 +104,10 @@ const RoleAdmin = () => {
                     message: '�Operaci�n fallida!',
                     description: 'Error al cargar roles.',
                 });
-            }).finally(()=> {
+            }).finally(() => {
                 setLoading(false); // �importante!
             })
- };
+    };
 
     useEffect(() => {
         fetchRoles();
@@ -126,67 +126,67 @@ const RoleAdmin = () => {
             nombre_rol: nombreRol,
             descripcion,
         };
-            if (editingRoleId) {
-                fetch(`/api/roles/${editingRoleId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(roleData),
-                })
-                    .then((res) => res.json())
-                    .then((data) => {
-                        setMessage('�Rol actualizado correctamente!');
-                        setAlert({
-                            type: 'success',
-                            message: '�Operaci�n exitosa!',
-                            description: 'El rol fue actualizado correctamente.',
-                        });
-                        setNombreRol('');
-                        setDescripcion('');
-                        setEditingRoleId(null);
-                        setIsModalOpen(false); // Cierra la modal al actualizar
-                        fetchRoles();
-                    })
-                    .catch((error) => {
-                        console.error('Error al actualizar el rol:', error);
-                        setMessage('Error al actualizar el rol.');
-                        setAlert({
-                            type: 'error',
-                            message: '�Operaci�n fallida!',
-                            description: 'Error al actualizar el rol.',
-                        });
-                    }).finally(() => {
-                        setLoading(false);
+        if (editingRoleId) {
+            fetch(`/api/roles/${editingRoleId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(roleData),
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    setMessage('�Rol actualizado correctamente!');
+                    setAlert({
+                        type: 'success',
+                        message: '�Operaci�n exitosa!',
+                        description: 'El rol fue actualizado correctamente.',
                     });
+                    setNombreRol('');
+                    setDescripcion('');
+                    setEditingRoleId(null);
+                    setIsModalOpen(false); // Cierra la modal al actualizar
+                    fetchRoles();
+                })
+                .catch((error) => {
+                    console.error('Error al actualizar el rol:', error);
+                    setMessage('Error al actualizar el rol.');
+                    setAlert({
+                        type: 'error',
+                        message: '�Operaci�n fallida!',
+                        description: 'Error al actualizar el rol.',
+                    });
+                }).finally(() => {
+                    setLoading(false);
+                });
 
-;
-            } else {
-                fetch('/api/roles', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(roleData),
-                })
-                    .then((res) => res.json())
-                    .then((data) => {
-                        setMessage('�Rol creado correctamente!');
-                        setAlert({
-                            type: 'success',
-                            message: '�Operaci�n exitosa!',
-                            description: 'El rol fue creado correctamente.',
-                        });
-                        setNombreRol('');
-                        setDescripcion('');
-                        setIsModalOpen(false); // Cierra la modal al crear el rol
-                        fetchRoles();
-                    })
-                    .catch((error) => {
-                        console.error('Error al crear el rol:', error);
-                        setMessage('Error al crear el rol.');
-                        setAlert({
-                            type: 'error',
-                            message: '�Operaci�n fallida!',
-                            description: 'Error al crear el rol.',
-                        });
+            ;
+        } else {
+            fetch('/api/roles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(roleData),
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    setMessage('�Rol creado correctamente!');
+                    setAlert({
+                        type: 'success',
+                        message: '�Operaci�n exitosa!',
+                        description: 'El rol fue creado correctamente.',
                     });
+                    setNombreRol('');
+                    setDescripcion('');
+                    setIsModalOpen(false); // Cierra la modal al crear el rol
+                    fetchRoles();
+                })
+                .catch((error) => {
+                    console.error('Error al crear el rol:', error);
+                    setMessage('Error al crear el rol.');
+                    setAlert({
+                        type: 'error',
+                        message: '�Operaci�n fallida!',
+                        description: 'Error al crear el rol.',
+                    });
+                });
         }
     };
 
@@ -243,7 +243,7 @@ const RoleAdmin = () => {
         );
     };
 
-    
+
     const columns = [{
         title: 'Acciones',
         key: 'acciones',
@@ -266,21 +266,23 @@ const RoleAdmin = () => {
                 />
             </>
         ),
-    },{ title: 'ID', dataIndex: 'id_rol', key: 'id_rol', sorter: (a, b) => a.id - b.id },
+    }, { title: 'ID', dataIndex: 'id_rol', key: 'id_rol', sorter: (a, b) => a.id - b.id },
     { title: 'Roles', dataIndex: 'nombre_rol', key: 'nombre_rol', sorter: (a, b) => a.name.localeCompare(b.name) },
     { title: 'Descripci�n', dataIndex: 'descripcion', key: 'descripcion', sorter: (a, b) => a.name.localeCompare(b.name) },
     {
-  title: 'Estado',dataIndex: 'estado',key: 'estado', render: (estado) => (<span style={{ color: estado ? 'green' : 'red', 
-      fontWeight: 'bold' }}>
-      {estado ? 'Activo' : 'Inactivo'}
-    </span>
-  )
-}
+        title: 'Estado', dataIndex: 'estado', key: 'estado', render: (estado) => (<span style={{
+            color: estado ? 'green' : 'red',
+            fontWeight: 'bold'
+        }}>
+            {estado ? 'Activo' : 'Inactivo'}
+        </span>
+        )
+    }
 
     ]
 
     return (
-        <div style={{padding: 20}}>
+        <div style={{ padding: 20 }}>
             <h2 className='titulo'>Lista de Roles</h2>
 
             <CustomAlert
@@ -321,60 +323,62 @@ const RoleAdmin = () => {
                 showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} elementos`
             }}
 
-/>
+            />
 
             {/* Ventana Modal */}
             <Modal
-  title={editingRoleId ? 'Editar Rol' : 'Crear Nuevo Rol'}
-  open={isModalOpen}
-  onCancel={closeModal}
-  footer={null}
-  destroyOnHidden
->
-  <Spin spinning={loading} tip="Guardando...">
-    <Form layout="vertical">
-      <Form.Item label="Nombre del Rol" required>
-        <Input
-          value={nombreRol}
-          onChange={(e) => {
-            setNombreRol(e.target.value);
-            if (errorNombre) setErrorNombre('');
-          }}
-          placeholder="Ingresa el nombre del rol"
-        />
-        {errorNombre && (
-          <p style={{ color: 'red', marginTop: 4 }}>{errorNombre}</p>
-        )}
-      </Form.Item>
+                title={editingRoleId ? 'Editar Rol' : 'Crear Nuevo Rol'}
+                open={isModalOpen}
+                onCancel={closeModal}
+                footer={null}
+                destroyOnHidden
+            >
+                <Spin spinning={loading} tip="Guardando...">
+                    <Form layout="vertical">
+                        <Form.Item label="Nombre del Rol" required>
+                            <Input
+                                value={nombreRol}
+                                onChange={(e) => {
+                                    setNombreRol(e.target.value);
+                                    if (errorNombre) setErrorNombre('');
+                                }}
+                                placeholder="Ingresa el nombre del rol"
+                            />
+                            {errorNombre && (
+                                <p style={{ color: 'red', marginTop: 4 }}>{errorNombre}</p>
+                            )}
+                        </Form.Item>
 
-      <Form.Item label="Descripción">
-        <Input.TextArea
-          value={descripcion}
-          onChange={(e) => setDescripcion(e.target.value)}
-          placeholder="Ingresa una descripción (opcional)"
-        />
-      </Form.Item>
+                        <Form.Item label="Descripción">
+                            <Input.TextArea
+                                value={descripcion}
+                                onChange={(e) => setDescripcion(e.target.value)}
+                                placeholder="Ingresa una descripción (opcional)"
+                            />
+                        </Form.Item>
 
-      <Form.Item label="Estado">
-        <Select value={estado} onChange={(value) => setEstado(value)}>
-          <Option value={true}>Activo</Option>
-          <Option value={false}>Inactivo</Option>
-        </Select>
-      </Form.Item>
+                        <Form.Item label="Estado">
+                            <Select value={estado} onChange={(value) => setEstado(value)}>
+                                <Option value={true}>Activo</Option>
+                                <Option value={false}>Inactivo</Option>
+                            </Select>
+                        </Form.Item>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-        <Button onClick={closeModal}>Cancelar</Button>
-        <Button type="primary" onClick={handleSubmit}>
-          {editingRoleId ? 'Actualizar Rol' : 'Crear Rol'}
-        </Button>
-      </div>
-    </Form>
-  </Spin>
-</Modal>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                            <Button onClick={closeModal} className="modal-action-button">Cancelar</Button> {}
+                            <Button type="primary" onClick={handleSubmit} className="modal-action-button"> {}
+                                {editingRoleId ? 'Actualizar Rol' : 'Guardar'} {}
+                            </Button>
+                        </div>
+
+
+                    </Form>
+                </Spin>
+            </Modal>
 
         </div>
     );
-    
+
 };
 
 export default RoleAdmin;

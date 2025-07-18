@@ -76,3 +76,23 @@
 p[style*="color: red"] {
   font-size: 13px;
 }
+
+.ant-modal-footer .ant-btn.modal-action-button {
+  background-color: #1890ff !important; 
+  border-color: #1890ff !important; 
+  color: white !important;
+  font-weight: bold !important; 
+  outline: none !important; 
+  box-shadow: none !important; 
+}
+
+
+.ant-modal-footer .ant-btn.modal-action-button:hover,
+.ant-modal-footer .ant-btn.modal-action-button:focus {
+  background-color: #40a9ff !important; 
+  border-color: #40a9ff !important;
+  color: white !important; 
+  outline: none !important;
+  box-shadow: none !important;
+}
+
