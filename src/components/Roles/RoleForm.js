@@ -467,7 +467,12 @@ const RoleAdmin = () => {
                                             dataIndex: 'nombre_modulo',
                                             key: 'nombre_modulo',
                                         },
-                                        
+                                        {
+                                            title: 'Descripción',
+                                            dataIndex: 'descripcion',
+                                            key: 'descripcion',
+                                            render: (text) => text || 'Sin descripción',
+                                        },
                                     ]}
                                     pagination={false}
                                     rowKey="id_permiso"
@@ -484,5 +489,3 @@ const RoleAdmin = () => {
 };
 
 export default RoleAdmin;
-
-
