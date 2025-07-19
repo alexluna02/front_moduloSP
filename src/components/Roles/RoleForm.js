@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './RoleAdmin.css';
-import { FaEdit, FaTrash, FaInfoCircle, FaSearch } from 'react-icons/fa';
-import { Button, Table, Spin, Modal, Input, Form, Select } from 'antd';
+import { FaEdit, FaTrash, FaInfoCircle, FaSearch, FaLock } from 'react-icons/fa';
+import { Button, Table, Spin, Modal, Input, Form, Select, Checkbox, List } from 'antd';
 import 'antd/dist/reset.css';
 import CustomAlert from '../Alert.js';
-import Inicio from '../seguridad/Inicio.js';
 
 const { Option } = Select;
 
@@ -39,32 +38,54 @@ export const crearRol = async (roleData) => {
     }
 };
 
+export const listarPermisos = async () => {
+    try {
+        const res = await fetch('/api/permisos');
+        const data = await res.json();
+        return data;
+    } catch (err) {
+        console.error('Error al cargar permisos:', err);
+        throw err;
+    }
+};
+
+export const asignarPermisosRol = async (roleId, permisos) => {
+    try {
+        const res = await fetch(`/api/roles_permisos/roles/${roleId}/permisos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ permisos }),
+        });
+
+        if (!res.ok) {
+            throw new Error('Error al asignar permisos');
+        }
+
+        const data = await res.json();
+        return { success: true, data };
+    } catch (error) {
+        console.error('Error al asignar permisos:', error);
+        return { success: false, error };
+    }
+};
+
 const RoleAdmin = () => {
+    const [form] = Form.useForm();
     const [estado, setEstado] = useState(true);
     const [roles, setRoles] = useState([]);
-    const [nombreRol, setNombreRol] = useState('');
-    const [descripcion, setDescripcion] = useState('');
-    const [message, setMessage] = useState('');
     const [editingRoleId, setEditingRoleId] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isPermisosModalOpen, setIsPermisosModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [alert, setAlert] = useState({
         type: '',
         message: '',
         description: '',
     });
-
-    const [errorNombre, setErrorNombre] = useState('');
     const [searchText, setSearchText] = useState('');
-
-    const validarNombre = (valor) => {
-        if (!valor || typeof valor !== 'string') return 'El nombre es obligatorio';
-        if (!valor.trim()) return 'El nombre es obligatorio';
-        if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(valor.trim())) {
-            return 'Solo se permiten letras y espacios';
-        }
-        return '';
-    };
+    const [permisos, setPermisos] = useState([]);
+    const [selectedPermisos, setSelectedPermisos] = useState([]);
+    const [loadingPermisos, setLoadingPermisos] = useState(false);
 
     const filteredRoles = roles.filter((item) =>
         Object.values(item).some((value) =>
@@ -76,6 +97,7 @@ const RoleAdmin = () => {
     const [pageSize, setPageSize] = useState(10);
 
     const fetchRoles = () => {
+        setLoading(true);
         fetch('/api/roles')
             .then((res) => res.json())
             .then((data) => {
@@ -83,102 +105,108 @@ const RoleAdmin = () => {
             })
             .catch((err) => {
                 console.error('Error al cargar roles:', err);
-                setMessage('Error al cargar roles.');
                 setAlert({
                     type: 'error',
                     message: '¡Operación fallida!',
                     description: 'Error al cargar roles.',
                 });
-            }).finally(() => {
+            })
+            .finally(() => {
                 setLoading(false);
             });
     };
 
+    const fetchPermisos = async () => {
+        try {
+            const data = await listarPermisos();
+            setPermisos(data);
+        } catch (err) {
+            setAlert({
+                type: 'error',
+                message: '¡Operación fallida!',
+                description: 'Error al cargar permisos.',
+            });
+        }
+    };
+
     useEffect(() => {
         fetchRoles();
+        fetchPermisos();
     }, []);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (values) => {
         setLoading(true);
-        e.preventDefault();
-
-        const error = validarNombre(nombreRol);
-        setErrorNombre(error);
-
-        if (error) {
-            setLoading(false);
-            return;
-        }
 
         const roleData = {
-            nombre_rol: nombreRol,
-            descripcion,
+            nombre_rol: values.nombreRol,
+            descripcion: values.descripcion,
             estado,
         };
 
-        if (editingRoleId) {
-            fetch(`/api/roles/${editingRoleId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(roleData),
-            })
-                .then((res) => res.json())
-                .then((data) => {
-                    setMessage('¡Rol actualizado correctamente!');
-                    setAlert({
-                        type: 'success',
-                        message: '¡Operación exitosa!',
-                        description: 'El rol fue actualizado correctamente.',
-                    });
-                    setNombreRol('');
-                    setDescripcion('');
-                    setEditingRoleId(null);
-                    setIsModalOpen(false);
-                    fetchRoles();
-                })
-                .catch((error) => {
-                    console.error('Error al actualizar el rol:', error);
-                    setMessage('Error al actualizar el rol.');
-                    setAlert({
-                        type: 'error',
-                        message: '¡Operación fallida!',
-                        description: 'Error al actualizar el rol.',
-                    });
-                })
-                .finally(() => {
-                    setLoading(false);
+        try {
+            if (editingRoleId) {
+                const res = await fetch(`/api/roles/${editingRoleId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(roleData),
                 });
-        } else {
-            fetch('/api/roles', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(roleData),
-            })
-                .then((res) => res.json())
-                .then((data) => {
-                    setMessage('¡Rol creado correctamente!');
-                    setAlert({
-                        type: 'success',
-                        message: '¡Operación exitosa!',
-                        description: 'El rol fue creado correctamente.',
-                    });
-                    setNombreRol('');
-                    setDescripcion('');
-                    setIsModalOpen(false);
-                    fetchRoles();
-                })
-                .catch((error) => {
-                    console.error('Error al crear el rol:', error);
-                    setMessage('Error al crear el rol.');
-                    setAlert({
-                        type: 'error',
-                        message: '¡Operación fallida!',
-                        description: 'Error al crear el rol.',
-                    });
-                })
-                .finally(() => {
-                    setLoading(false);
+                if (!res.ok) throw new Error('Error al actualizar el rol');
+                setAlert({
+                    type: 'success',
+                    message: '¡Operación exitosa!',
+                    description: 'El rol fue actualizado correctamente.',
                 });
+            } else {
+                const { success, data } = await crearRol(roleData);
+                if (!success) throw new Error('Error al crear el rol');
+                setEditingRoleId(data.id_rol); // Set role ID for permissions assignment
+                setAlert({
+                    type: 'success',
+                    message: '¡Operación exitosa!',
+                    description: 'El rol fue creado correctamente.',
+                });
+            }
+            form.resetFields();
+            setIsModalOpen(false);
+            fetchRoles();
+        } catch (error) {
+            console.error('Error en la operación del rol:', error);
+            setAlert({
+                type: 'error',
+                message: '¡Operación fallida!',
+                description: 'Error en la operación del rol.',
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handlePermisosSubmit = async () => {
+        if (!editingRoleId) {
+            setIsPermisosModalOpen(false);
+            return;
+        }
+        setLoading(true);
+        try {
+            const { success } = await asignarPermisosRol(editingRoleId, selectedPermisos);
+            if (!success) throw new Error('Error al asignar permisos');
+            setAlert({
+                type: 'success',
+                message: '¡Operación exitosa!',
+                description: 'Los permisos fueron asignados correctamente.',
+            });
+            setIsPermisosModalOpen(false);
+            setSelectedPermisos([]);
+            fetchRoles();
+        } catch (error) {
+            console.error('Error al asignar permisos:', error);
+            setAlert({
+                type: 'error',
+                message: '¡Operación fallida!',
+                description: 'Error al asignar permisos.',
+            });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -186,8 +214,7 @@ const RoleAdmin = () => {
         if (window.confirm('¿Estás seguro de eliminar este rol?')) {
             fetch(`/api/roles/${id}`, { method: 'DELETE' })
                 .then((res) => res.json())
-                .then((data) => {
-                    setMessage('¡Rol eliminado correctamente!');
+                .then(() => {
                     setAlert({
                         type: 'success',
                         message: '¡Operación exitosa!',
@@ -197,7 +224,6 @@ const RoleAdmin = () => {
                 })
                 .catch((error) => {
                     console.error('Error al eliminar el rol:', error);
-                    setMessage('Error al eliminar el rol.');
                     setAlert({
                         type: 'error',
                         message: '¡Operación fallida!',
@@ -207,54 +233,80 @@ const RoleAdmin = () => {
         }
     };
 
-    const handleEdit = (role) => {
+    const handleEdit = async (role) => {
         setEditingRoleId(role.id_rol);
-        setNombreRol(role.nombre_rol);
-        setDescripcion(role.descripcion);
+        form.setFieldsValue({
+            nombreRol: role.nombre_rol,
+            descripcion: role.descripcion,
+        });
         setEstado(role.estado);
         setIsModalOpen(true);
+        setLoadingPermisos(true);
+        try {
+            const res = await fetch(`/api/roles_permisos/roles/${role.id_rol}/permisos`);
+            if (res.ok) {
+                const data = await res.json();
+                setSelectedPermisos(data.map((p) => p.id_permiso));
+            } else {
+                setSelectedPermisos([]);
+            }
+        } catch (e) {
+            console.error('Error al cargar permisos:', e);
+            setSelectedPermisos([]);
+        } finally {
+            setLoadingPermisos(false);
+        }
+    };
+
+    const openPermisosModal = () => {
+        if (!editingRoleId) {
+            setSelectedPermisos([]); // Ensure no permissions are selected for new role
+        }
+        setIsPermisosModalOpen(true);
     };
 
     const openModal = () => {
         setEditingRoleId(null);
-        setNombreRol('');
-        setDescripcion('');
+        form.resetFields();
         setEstado(true);
+        setSelectedPermisos([]); // Reset selected permissions for new role
         setIsModalOpen(true);
     };
 
     const closeModal = () => {
         setIsModalOpen(false);
         setEditingRoleId(null);
-        setNombreRol('');
-        setDescripcion('');
-        setErrorNombre('');
+        form.resetFields();
+        setSelectedPermisos([]);
+    };
+
+    const closePermisosModal = () => {
+        setIsPermisosModalOpen(false);
     };
 
     const [detalleVisible, setDetalleVisible] = useState(false);
     const [detalleRol, setDetalleRol] = useState(null);
     const [detallePermisos, setDetallePermisos] = useState([]);
-    const [loadingPermisos, setLoadingPermisos] = useState(false);
 
     const handleDetails = async (role) => {
-      setDetalleRol(role);
-      setDetallePermisos([]);
-      setDetalleVisible(true);
-      setLoadingPermisos(true);
-      try {
-        const res = await fetch(`https://aplicacion-de-seguridad-v2.onrender.com/api/roles_permisos/roles/${role.id_rol}/permisos`);
-        if (res.ok) {
-          const data = await res.json();
-          setDetallePermisos(data);
-        } else {
-          setDetallePermisos([]);
-        }
-      } catch (e) {
-        console.error('Error al cargar permisos:', e);
+        setDetalleRol(role);
         setDetallePermisos([]);
-      } finally {
-        setLoadingPermisos(false);
-      }
+        setDetalleVisible(true);
+        setLoadingPermisos(true);
+        try {
+            const res = await fetch(`/api/roles_permisos/roles/${role.id_rol}/permisos`);
+            if (res.ok) {
+                const data = await res.json();
+                setDetallePermisos(data);
+            } else {
+                setDetallePermisos([]);
+            }
+        } catch (e) {
+            console.error('Error al cargar permisos:', e);
+            setDetallePermisos([]);
+        } finally {
+            setLoadingPermisos(false);
+        }
     };
 
     const columns = [
@@ -262,17 +314,16 @@ const RoleAdmin = () => {
             title: 'Acciones',
             key: 'acciones',
             render: (_, role) => (
-                <>
+                <div className="flex space-x-2">
                     <Button
-                        icon={<FaEdit size={20} color="#000000ff" />}
+                        icon={<FaEdit size={20} className="text-black" />}
                         onClick={() => handleEdit(role)}
-                        style={{ marginRight: 8 }}
                     />
                     <Button
-                        icon={<FaTrash size={20} color="#ff4154ff" />}
+                        icon={<FaTrash size={20} className="text-red-500" />}
                         onClick={() => handleDelete(role.id_rol)}
                     />
-                </>
+                </div>
             ),
         },
         {
@@ -300,6 +351,7 @@ const RoleAdmin = () => {
                 <Button
                     icon={<FaInfoCircle />}
                     onClick={() => handleDetails(role)}
+                    className="flex items-center"
                 >
                     Ver
                 </Button>
@@ -311,10 +363,7 @@ const RoleAdmin = () => {
             key: 'estado',
             render: (estado) => (
                 <span
-                    style={{
-                        color: estado ? 'green' : 'red',
-                        fontWeight: 'bold',
-                    }}
+                    className={estado ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}
                 >
                     {estado ? 'Activo' : 'Inactivo'}
                 </span>
@@ -323,8 +372,8 @@ const RoleAdmin = () => {
     ];
 
     return (
-        <div style={{ padding: 20 }}>
-            <h2 className="titulo">Lista de Roles</h2>
+        <div className="p-5">
+            <h2 className="text-2xl font-bold mb-4">Lista de Roles</h2>
 
             <CustomAlert
                 type={alert.type}
@@ -333,29 +382,17 @@ const RoleAdmin = () => {
                 onClose={() => setAlert({ type: '', message: '', description: '' })}
             />
 
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 16,
-                }}
-            >
-                <div style={{ marginLeft: 10 }}>
-                    <Button type="primary" onClick={openModal}>
-                        Crear
-                    </Button>
-                </div>
-
-                <div style={{ marginRight: 10 }}>
-                    <Input
-                        placeholder="Buscar..."
-                        prefix={<FaSearch />}
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        style={{ width: 300 }}
-                    />
-                </div>
+            <div className="flex justify-between items-center mb-4">
+                <Button type="primary" onClick={openModal} className="ml-2">
+                    Crear
+                </Button>
+                <Input
+                    placeholder="Buscar..."
+                    prefix={<FaSearch />}
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    className="w-64 mr-2"
+                />
             </div>
 
             <Table
@@ -383,31 +420,31 @@ const RoleAdmin = () => {
                 open={isModalOpen}
                 onCancel={closeModal}
                 footer={null}
-                destroyOnHidden
+                destroyOnClose
             >
                 <Spin spinning={loading} tip="Guardando...">
-                    <Form layout="vertical" onSubmit={handleSubmit}>
-                        <Form.Item label="Nombre del Rol" required>
+                    <Form form={form} layout="vertical" onFinish={handleSubmit}>
+                        <Form.Item
+                            label="Nombre del Rol"
+                            name="nombreRol"
+                            rules={[
+                                { required: true, message: 'El nombre es obligatorio' },
+                                {
+                                    pattern: /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/,
+                                    message: 'Solo se permiten letras y espacios',
+                                },
+                            ]}
+                        >
                             <Input
-                                value={nombreRol}
-                                onChange={(e) => {
-                                    setNombreRol(e.target.value);
-                                    if (errorNombre) setErrorNombre('');
-                                }}
                                 placeholder="Ingresa el nombre del rol"
+                                className="w-full"
                             />
-                            {errorNombre && (
-                                <p style={{ color: 'red', marginTop: 4 }}>
-                                    {errorNombre}
-                                </p>
-                            )}
                         </Form.Item>
 
-                        <Form.Item label="Descripción">
+                        <Form.Item label="Descripción" name="descripcion">
                             <Input.TextArea
-                                value={descripcion}
-                                onChange={(e) => setDescripcion(e.target.value)}
                                 placeholder="Ingresa una descripción (opcional)"
+                                className="w-full"
                             />
                         </Form.Item>
 
@@ -415,25 +452,67 @@ const RoleAdmin = () => {
                             <Select
                                 value={estado}
                                 onChange={(value) => setEstado(value)}
+                                className="w-full"
                             >
                                 <Option value={true}>Activo</Option>
                                 <Option value={false}>Inactivo</Option>
                             </Select>
                         </Form.Item>
 
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'flex-end',
-                                gap: '8px',
-                            }}
-                        >
-                            <Button onClick={closeModal}>Cancelar</Button>
-                            <Button type="primary" onClick={handleSubmit}>
-                                {editingRoleId ? 'Guardar' : 'Guardar'}
+                        <div className="flex justify-between items-center">
+                            <Button
+                                icon={<FaLock />}
+                                onClick={openPermisosModal}
+                                disabled={!editingRoleId && !form.getFieldValue('nombreRol')}
+                                className="flex items-center"
+                            >
+                                Permisos
                             </Button>
+                            <div className="flex gap-2">
+                                <Button onClick={closeModal}>Cancelar</Button>
+                                <Button type="primary" htmlType="submit">
+                                    {editingRoleId ? 'Guardar' : 'Crear'}
+                                </Button>
+                            </div>
                         </div>
                     </Form>
+                </Spin>
+            </Modal>
+
+            <Modal
+                title="Asignar Permisos"
+                open={isPermisosModalOpen}
+                onCancel={closePermisosModal}
+                footer={[
+                    <Button key="cancel" onClick={closePermisosModal}>
+                        Cancelar
+                    </Button>,
+                    <Button key="submit" type="primary" onClick={handlePermisosSubmit}>
+                        Guardar
+                    </Button>,
+                ]}
+                destroyOnClose
+            >
+                <Spin spinning={loadingPermisos} tip="Cargando permisos...">
+                    <List
+                        dataSource={permisos}
+                        renderItem={(permiso) => (
+                            <List.Item>
+                                <Checkbox
+                                    checked={selectedPermisos.includes(permiso.id_permiso)}
+                                    onChange={(e) => {
+                                        setSelectedPermisos((prev) =>
+                                            e.target.checked
+                                                ? [...prev, permiso.id_permiso]
+                                                : prev.filter((id) => id !== permiso.id_permiso)
+                                        );
+                                    }}
+                                >
+                                    {permiso.nombre_permiso} ({permiso.nombre_modulo})
+                                </Checkbox>
+                            </List.Item>
+                        )}
+                    />
                 </Spin>
             </Modal>
 
@@ -449,7 +528,7 @@ const RoleAdmin = () => {
                         <p><strong>Nombre:</strong> {detalleRol.nombre_rol}</p>
                         <p><strong>Descripción:</strong> {detalleRol.descripcion || 'Sin descripción'}</p>
                         <p><strong>Estado:</strong> {detalleRol.estado ? 'Activo' : 'Inactivo'}</p>
-                        <div style={{ marginTop: 16 }}>
+                        <div className="mt-4">
                             <strong>Permisos asociados:</strong>
                             {loadingPermisos ? (
                                 <p>Cargando permisos...</p>
@@ -466,12 +545,6 @@ const RoleAdmin = () => {
                                             title: 'Módulo',
                                             dataIndex: 'nombre_modulo',
                                             key: 'nombre_modulo',
-                                        },
-                                        {
-                                            title: 'Descripción',
-                                            dataIndex: 'descripcion',
-                                            key: 'descripcion',
-                                            render: (text) => text || 'Sin descripción',
                                         },
                                     ]}
                                     pagination={false}
