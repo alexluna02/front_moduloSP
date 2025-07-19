@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './usuario.css';
-import { Table, Button, Input, Modal, Form, Select, Spin, Alert } from 'antd';
+import { Table, Button, Input, Modal, Form, Select, Spin, Alert,Tag } from 'antd';
 import { FaSearch, FaEdit, FaTrash, FaUserPlus } from 'react-icons/fa';
 import '@ant-design/icons';
 import Inicio from '../seguridad/Inicio';
@@ -22,10 +22,60 @@ const UserList = () => {
   const [form] = Form.useForm();
   const [formRol] = Form.useForm();
   const [roles, setRoles] = useState([]);
-  const [nombreRol, setNombreRol] = useState('');
-  const [descripcion, setDescripcion] = useState('');
   const [estado, setEstado] = useState(true);
   const [isRolModalOpen, setIsRolModalOpen] = useState(false);
+  const [originalRoles, setOriginalRoles] = useState([]);
+  const [visible, setVisible] = useState(false);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
+
+        const cerrarModal = () => {
+            setVisible(false);
+            setUsuarioSeleccionado(null);
+    };
+    const obtenerRolesUsuario = async (id_usuario) => {
+        try {
+            const res = await axios.get(`${API_URL}/usuarios_roles/${id_usuario}`);
+            return res.data; // Asegúrate de que sea un array de nombres o de objetos con nombre
+        } catch (error) {
+            console.error('Error al obtener roles del usuario:', error);
+            return [];
+        }
+    };
+
+    const obtenerPermisosRoles = async (id_rol) => {
+        try {
+            const res = await axios.get(`${API_URL}/roles_permisos/roles/${id_rol}/permisos`);
+            console.log('Buscando permisos para rol:', id_rol);
+            console.log('Permisos recibidos:', res.data);
+
+            return res.data; // Debería ser un array de permisos: [{ id_permiso, nombre_permiso }]
+        } catch (error) {
+            console.error('Error al obtener permisos del rol:', error);
+            return [];
+        }
+    };
+
+    const obtenerPermisosPorRoles = async (roles) => {
+        const rolesConPermisos = await Promise.all(
+            roles.map(async (rol) => {
+                const permisos = await obtenerPermisosRoles(rol.id_rol);
+                return { ...rol, permisos };
+            })
+        );
+        return rolesConPermisos;
+    };
+
+    const mostrarModal = async (record) => {
+        const roles = await obtenerRolesUsuario(record.id_usuario);
+        const rolesConPermisos = await obtenerPermisosPorRoles(roles);
+
+        setUsuarioSeleccionado({
+            ...record,
+            roles: rolesConPermisos
+        });
+
+        setVisible(true);
+    };
 
   // Obtener usuarios
   const fetchUsers = async () => {
@@ -46,7 +96,6 @@ const UserList = () => {
 
   useEffect(() => {
     fetchUsers();
-
     setLoading(true);
     listarRoles()
       .then((data) => {
@@ -66,7 +115,7 @@ const UserList = () => {
 
   // Filtrar búsqueda
   const filteredUsers = users.filter((u) =>
-    ['usuario', 'id_usuario'].some((field) =>
+    ['usuario', 'id_usuario','nombre'].some((field) =>
       String(u[field]).toLowerCase().includes(searchText.toLowerCase())
     )
   );
@@ -104,7 +153,6 @@ const UserList = () => {
     }
   };
 
-
   // Eliminar usuario
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
@@ -130,9 +178,17 @@ const UserList = () => {
   };
 
   // Abrir modal para crear o editar usuario
-  const openModal = (user = null) => {
+  const openModal = async (user = null) => {
     setEditingUser(user);
-    if (user) {
+      if (user) {
+          const rolesUsuario = await obtenerRolesUsuario(user.id_usuario);
+          const rolesIds = Array.isArray(rolesUsuario)
+              ? rolesUsuario.map(r => r.id_rol)
+              : [];
+          console.log('Roles completos recibidos:', rolesUsuario);
+          setOriginalRoles(rolesIds);
+          console.log('roles:', { rolesIds });
+
       // Obtener el rol del usuario (asumiendo que viene como user.rol o user.id_rol)
       // Si no viene, deberás obtenerlo de la API y asignarlo aquí
       form.setFieldsValue({
@@ -140,10 +196,12 @@ const UserList = () => {
         contrasena: user.contrasena,
         nombre: user.nombre,
         estado: user.estado,
-        rol: user.rol || user.id_rol // Ajusta según la estructura de tu API
+          rol: rolesIds ,// Array.isArray(user.roles) ? user.roles.map(r => r.id_rol) : []
       });
+          console.log('valores del formulario:', form.getFieldsValue());
     } else {
-      form.resetFields();
+          form.resetFields();
+          setOriginalRoles([]); // Por si acaso
     }
     setModalOpen(true);
   };
@@ -151,12 +209,38 @@ const UserList = () => {
   // Guardar usuario (crear o actualizar)
   const handleModalSubmit = async () => {
     try {
-      const values = await form.validateFields();
+        const values = await form.validateFields();
+        const newRoles = Array.isArray(values.rol) ? values.rol : [];
+        const removedRoles = originalRoles.filter(id => !newRoles.includes(id));
+        const addedRoles = newRoles.filter(id => !originalRoles.includes(id));
+
       setLoading(true);
 
       if (editingUser) {
         // Actualizar usuario
-        await axios.put(`${API_URL}/usuarios/${editingUser.id_usuario}`, values);
+          await axios.put(`${API_URL}/usuarios/${editingUser.id_usuario}`, values);
+
+          // Eliminar roles quitados
+          await Promise.all(
+              removedRoles.map(id_rol =>
+                  axios.delete(`${API_URL}/usuarios_roles`, {
+                      data: {
+                          id_usuario: editingUser.id_usuario,
+                          id_rol
+                      }
+                  })
+              )
+          );
+          // Agregar nuevos roles
+          await Promise.all(
+              addedRoles.map(id_rol =>
+                  axios.post(`${API_URL}/usuarios_roles`, {
+                      id_usuario: editingUser.id_usuario,
+                      id_rol
+                  })
+              )
+          );
+
         setAlert({
           type: 'success',
           message: 'Usuario actualizado',
@@ -178,12 +262,14 @@ const UserList = () => {
           id_usuario,
           id_rol: values.rol
         });
-
-        await axios.post(`${API_URL}/usuarios_roles`, {
-          id_usuario,
-          id_rol: values.rol,
-        });
-
+          await Promise.all(
+              values.rol.map(id_rol =>
+                  axios.post(`${API_URL}/usuarios_roles`, {
+                      id_usuario,
+                      id_rol,
+                  })
+              )
+          );
         form.resetFields();
         setModalOpen(false);
 
@@ -192,8 +278,6 @@ const UserList = () => {
           message: 'Usuario creado',
           description: 'Nuevo usuario agregado correctamente.',
         });
-
-
       }
 
       fetchUsers();
@@ -232,17 +316,22 @@ const UserList = () => {
       title: 'ID',
       dataIndex: 'id_usuario',
       key: 'id_usuario',
-      render: (id) => `#${id.toString().padStart(3, '0')}`,
+        render: (id) => `#${id.toString().padStart(3, '0')}`,
+      sorter: (a,b)=> a.id_usuario-b.id_usuario,
     },
     {
       title: 'Usuario',
       dataIndex: 'usuario',
-      key: 'usuario',
+        key: 'usuario',
+        sorter: (a, b) => a.usuario.localeCompare(b.usuario),
+      sortDirection:['ascend','descend'],
     },
     {
       title: 'Nombre',
       dataIndex: 'nombre',
-      key: 'nombre',
+        key: 'nombre',
+        sorter: (a, b) => a.nombre.localeCompare(b.nombre),
+      sortDirection:['ascend','descend'],
     },
     {
       title: 'Estado',
@@ -252,13 +341,23 @@ const UserList = () => {
         <span className={estado ? 'status active' : 'status inactive'}>
           {estado ? 'Activo' : 'Inactivo'}
         </span>
-      ),
-    },
+        ),
+      sorter:(a,b)=>a.estado-b.estado,
+      },
+      {
+          title: 'Detalles',
+          render: (_, record) => (
+              <Button type="link" onClick={() => mostrarModal(record)}>
+                  Expandir
+              </Button>
+          ),
+      },
     {
       title: 'Fecha Creación',
       dataIndex: 'fecha_creacion',
       key: 'fecha_creacion',
-      render: (fecha) => new Date(fecha).toLocaleString(),
+        render: (fecha) => new Date(fecha).toLocaleString(),
+      sorter:(a,b)=>new Date(a.fecha_creacion)-new Date(b.fecha_creacion),
     },
   ];
 
@@ -275,7 +374,7 @@ const UserList = () => {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ marginLeft: 10 }}>
-          <Button type="primary" icon={<FaUserPlus />} onClick={() => openModal()}>
+          <Button type="primary" icon={<FaUserPlus />} onClick={() => openModal()} className="fixed-primary-button">
             Nuevo Usuario
           </Button>
         </div>
@@ -297,7 +396,35 @@ const UserList = () => {
         rowKey="id_usuario"
         loading={loading}
         pagination={{ showSizeChanger: true }}
-      />
+          />
+
+          <Modal
+              title={`Detalles de ${usuarioSeleccionado?.nombre}`}
+              visible={visible}
+              onCancel={cerrarModal}
+              footer={null}
+          >
+              <p><strong>ID:</strong> {usuarioSeleccionado?.id_usuario}</p>
+              <p><strong>Nombre:</strong> {usuarioSeleccionado?.nombre}</p>
+              <p><strong>Usuario:</strong> {usuarioSeleccionado?.usuario}</p>
+              <p><strong>Estado:</strong> {usuarioSeleccionado?.estado ? 'Activo' : 'Inactivo'}</p>
+
+              <p><strong>Roles y Permisos:</strong></p>
+              {usuarioSeleccionado?.roles?.map((rol) => (
+                  <div key={rol.id_rol} style={{ marginBottom: 12 }}>
+                      <Tag color="green">{rol.nombre_rol}</Tag>
+                      <div style={{ marginLeft: 16 }}>
+                          {rol.permisos?.length > 0 ? (
+                              rol.permisos.map((permiso) => (
+                                  <Tag key={permiso.id_permiso} color="blue">{permiso.nombre_permiso}</Tag>
+                              ))
+                          ) : (
+                              <em style={{ color: '#999' }}>Sin permisos asignados</em>
+                          )}
+                      </div>
+                  </div>
+              ))}
+          </Modal>
 
       <Modal
         title={editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
@@ -346,20 +473,43 @@ const UserList = () => {
               ]}
             >
               <Input.Password placeholder="Ingrese la contraseña" />
-            </Form.Item>
+                      </Form.Item>
 
+                      {editingUser && (
+                          <Form.Item label="Roles asignados actualmente">
+                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                  {originalRoles.map(id => {
+                                      const rol = roles.find(r => r.id_rol === id);
+                                      return rol ? (
+                                          <Tag key={id} color="blue">
+                                              {rol.nombre_rol}
+                                          </Tag>
+                                      ) : null;
+                                  })}
+                              </div>
+                          </Form.Item>
+                      )}
 
-            <Form.Item label="Rol" name="rol" rules={[{ required: true, message: 'Selecciona un rol' }]}>
-              <Select placeholder="Selecciona un rol" style={{ width: '100%' }}>
-                {roles.map(rol => (
-                  <Select.Option key={rol.id_rol} value={rol.id_rol}>
-                    {rol.nombre_rol}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
+                      <Form.Item
+                          label="Roles"
+                          name="rol" // ahora en plural
+                          rules={[{ required: true, message: 'Selecciona al menos un rol' }]}
+                      >
+                          <Select
+                              mode="multiple" // 🔑 esto habilita selección múltiple
+                              placeholder="Selecciona uno o varios roles"
+                              style={{ width: '100%' }}
+                          >
+                              {roles.map(rol => (
+                                  <Select.Option key={rol.id_rol} value={rol.id_rol}>
+                                      {rol.nombre_rol}
+                                  </Select.Option>
+                              ))}
+                          </Select>
+                      </Form.Item>
+
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-            <Button onClick={() => setIsRolModalOpen(true)} className="modal-action-button">Agregar nuevo rol</Button>
+                          <Button type="primary" onClick={() => setIsRolModalOpen(true)} className="fixed-primary-button" >Agregar nuevo rol</Button>
 
               <Modal
                 title="Crear Rol"
@@ -367,7 +517,10 @@ const UserList = () => {
                 onOk={handleCrearRol}
                 onCancel={() => setIsRolModalOpen(false)}
                 confirmLoading={loading}
-                okText="Crear Rol"
+                              okText="Guardar Rol"
+                              cancelText="Cancelar"
+                              okButtonProps={{ className: 'modal-action-button' }}
+                              cancelButtonProps={{ className: 'modal-action-button' }}
               >
                 {alert && <Alert type={alert.type} message={alert.message} description={alert.description} />}
                 <Form form={formRol} layout="vertical">

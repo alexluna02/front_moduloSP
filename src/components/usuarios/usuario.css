@@ -155,3 +155,27 @@
   outline: none !important;
   box-shadow: none !important;
 }
+
+/* Este bloque aumenta el tamaño de los íconos del orden */
+.ant-table-column-sorter-up,
+.ant-table-column-sorter-down {
+    font-size: 18px !important; /* Cambia 18px por el tamaño deseado */
+    line-height: 1;
+    vertical-align: middle;
+    font-weight: bold;
+    transform: scale(1.3);
+}
+
+.fixed-primary-button {
+    background-color: #1890ff !important;
+    border-color: #1890ff !important;
+    color: white !important;
+    transition: background-color 0.3s ease;
+}
+
+    /* Neutraliza el efecto hover y focus */
+    .fixed-primary-button:hover,
+    .fixed-primary-button:focus {
+        background-color: #40a9ff !important; /* tono más claro */
+        border-color: #40a9ff !important;
+    }
