@@ -53,7 +53,7 @@ function Login() {
       const response = await fetch('http://localhost:3000/api/usuarios/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario, contrasena, id_modulo: 'FAC' }),
+        body: JSON.stringify({ usuario, contrasena, id_modulo: 'SEG' }),
       });
 
       if (response.ok) {
@@ -66,13 +66,23 @@ function Login() {
         }
 
         // Guardar token y usuario
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('usuario', JSON.stringify(data.usuario || { usuario }));
+        // Guardar token, usuario y permisos
+localStorage.setItem('token', data.token);
+localStorage.setItem('usuario', JSON.stringify(data.usuario));
+localStorage.setItem('permisos', JSON.stringify(data.permisos));
 
-        setMensaje('Login exitoso');
+// Redirección por nombre del permiso
+const permisoLectura = data.permisos.find(p => 
+  p.descripcion?.includes('R') && p.nombre_permiso
+);
 
-        // Redirigir a inicio u otra ruta protegida
-        window.location.href = 'http://localhost:3001/';
+if (permisoLectura) {
+  const ruta = permisoLectura.nombre_permiso.toLowerCase();
+  window.location.href = `/${ruta}`;
+} else {
+  setMensaje('No tienes permisos para acceder a ningún módulo.');
+}
+
       } else {
         const errorMsg = await handleLoginError(response);
         setMensaje(errorMsg);

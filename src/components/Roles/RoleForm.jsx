@@ -4,10 +4,12 @@ import { FaEdit, FaTrash, FaInfoCircle, FaSearch, FaLock } from 'react-icons/fa'
 import { Button, Table, Spin, Modal, Input, Form, Select, Checkbox, List } from 'antd';
 import 'antd/dist/reset.css';
 import CustomAlert from '../Alert.js';
+import { useNavigate } from 'react-router-dom';
 
 const { Option } = Select;
 
 export const listarRoles = async () => {
+    
     try {
         const res = await fetch('/api/roles');
         const data = await res.json();
@@ -16,6 +18,7 @@ export const listarRoles = async () => {
         console.error('Error al cargar roles:', err);
         throw err;
     }
+    
 };
 
 export const crearRol = async (roleData) => {
@@ -70,6 +73,16 @@ export const asignarPermisosRol = async (roleId, permisos) => {
 };
 
 const RoleAdmin = () => {
+        const navigate = useNavigate();
+
+    // Redirección si no hay token válido
+    useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        navigate('/login');
+    }
+    }, [navigate]);
+
     const [form] = Form.useForm();
     const [estado, setEstado] = useState(true);
     const [roles, setRoles] = useState([]);
@@ -86,6 +99,18 @@ const RoleAdmin = () => {
     const [permisos, setPermisos] = useState([]);
     const [selectedPermisos, setSelectedPermisos] = useState([]);
     const [loadingPermisos, setLoadingPermisos] = useState(false);
+
+    // Obtener permisos desde localStorage
+    const permiso = JSON.parse(localStorage.getItem('permisos') || '[]');
+
+    // Buscar el permiso para este módulo (Roles)
+    const permisoRoles = permisos.find(p => p.nombre_permiso?.toLowerCase() === 'roles');
+
+    // Funciones para saber si tiene permiso para cada acción
+    const puedeLeer = permisoRoles?.descripcion.includes('R');
+    const puedeCrear = permisoRoles?.descripcion.includes('C');
+    const puedeEditar = permisoRoles?.descripcion.includes('U');
+    const puedeEliminar = permisoRoles?.descripcion.includes('D');
 
     const filteredRoles = roles.filter((item) =>
         Object.values(item).some((value) =>
@@ -314,16 +339,22 @@ const RoleAdmin = () => {
             title: 'Acciones',
             key: 'acciones',
             render: (_, role) => (
+                
+                
                 <div className="flex space-x-2">
+                    {puedeEditar && (
                     <Button
                         icon={<FaEdit size={20} className="text-black" />}
                         onClick={() => handleEdit(role)}
-                    />
+                    />)}
+                    {puedeEliminar && (
                     <Button
                         icon={<FaTrash size={20} className="text-red-500" />}
                         onClick={() => handleDelete(role.id_rol)}
-                    />
+                    />)}
+                    
                 </div>
+                
             ),
         },
         {
@@ -372,6 +403,7 @@ const RoleAdmin = () => {
     ];
 
     return (
+        
         <div className="p-5">
             <h2 className="text-2xl font-bold mb-4">Lista de Roles</h2>
 
@@ -383,9 +415,10 @@ const RoleAdmin = () => {
             />
 
             <div className="flex justify-between items-center mb-4">
+                {puedeCrear && (
                 <Button type="primary" onClick={openModal} className="ml-2">
                     Crear
-                </Button>
+                </Button>)}
                 <Input
                     placeholder="Buscar..."
                     prefix={<FaSearch />}

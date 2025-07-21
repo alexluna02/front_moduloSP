@@ -6,13 +6,23 @@ import { FaSearch, FaEdit, FaTrash, FaUserPlus } from 'react-icons/fa';
 import '@ant-design/icons';
 import Inicio from '../seguridad/Inicio';
 import CustomAlert from '../Alert';
-import { listarRoles, crearRol } from '../Roles/RoleForm.js';
+import { listarRoles, crearRol } from '../Roles/RoleForm';
+import { useNavigate } from 'react-router-dom';
 
 
 const { Option } = Select;
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
 
 const UserList = () => {
+  const navigate = useNavigate();
+
+// Redirección si no hay token válido
+    useEffect(() => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+      }
+    }, [navigate]);
   const [users, setUsers] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [alert, setAlert] = useState({ type: '', message: '', description: '' });
@@ -92,7 +102,21 @@ const UserList = () => {
     } finally {
       setLoading(false);
     }
+    
   };
+// Obtener permisos desde localStorage
+    const permisos = JSON.parse(localStorage.getItem('permisos') || '[]');
+
+    // Buscar el permiso para este módulo (Usuarios)
+    const permisoUsuarios = permisos.find(p => p.nombre_permiso?.toLowerCase() === 'usuarios');
+
+    // Funciones para saber si tiene permiso para cada acción
+    const puedeLeer = permisoUsuarios?.descripcion.includes('R');
+    const puedeCrear = permisoUsuarios?.descripcion.includes('C');
+    const puedeEditar = permisoUsuarios?.descripcion.includes('U');
+    const puedeEliminar = permisoUsuarios?.descripcion.includes('D');
+
+
 
   useEffect(() => {
     fetchUsers();
@@ -299,19 +323,24 @@ const UserList = () => {
       key: 'acciones',
       render: (_, record) => (
         <>
-          <Button
-            icon={<FaEdit />}
-            onClick={() => openModal(record)}
-            style={{ marginRight: 8 }}
-          />
-          <Button
-            icon={<FaTrash />}
-            danger
-            onClick={() => handleDelete(record.id_usuario)}
-          />
+          {puedeEditar && (
+            <Button
+              icon={<FaEdit />}
+              onClick={() => openModal(record)}
+              style={{ marginRight: 8 }}
+            />
+          )}
+          {puedeEliminar && (
+            <Button
+              icon={<FaTrash />}
+              danger
+              onClick={() => handleDelete(record.id_usuario)}
+            />
+          )}
         </>
       ),
     },
+
     {
       title: 'ID',
       dataIndex: 'id_usuario',
@@ -374,9 +403,11 @@ const UserList = () => {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ marginLeft: 10 }}>
-          <Button type="primary" icon={<FaUserPlus />} onClick={() => openModal()} className="fixed-primary-button">
-            Nuevo Usuario
-          </Button>
+          {puedeCrear && (
+            <Button type="primary" icon={<FaUserPlus />} onClick={() => openModal()} className="fixed-primary-button">
+              Nuevo Usuario
+            </Button>
+          )}
         </div>
 
         <div style={{ marginRight: 10 }}>
@@ -552,6 +583,8 @@ const UserList = () => {
       </Modal>
     </div>
   );
+  
+
 };
 
 export default UserList;

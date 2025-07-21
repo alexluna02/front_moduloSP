@@ -3,11 +3,22 @@ import axios from 'axios';
 import { Table, Button, Input, Modal, Form, Select, Spin } from 'antd';
 import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import CustomAlert from '../Alert';
+import { useNavigate } from 'react-router-dom';
 
 const { Option } = Select;
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
 
 const PermisosList = () => {
+  const navigate = useNavigate();
+
+// Redirección si no hay token válido
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    navigate('/login');
+  }
+}, [navigate]);
+
   const [permisos, setPermisos] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [alert, setAlert] = useState({ type: '', message: '', description: '' });
@@ -15,6 +26,18 @@ const PermisosList = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPermiso, setEditingPermiso] = useState(null);
   const [form] = Form.useForm();
+  // Obtener permisos desde localStorage
+const permiso = JSON.parse(localStorage.getItem('permisos') || '[]');
+
+// Buscar el permiso para este módulo (Permisos)
+const permisoPermisos = permisos.find(p => p.nombre_permiso?.toLowerCase() === 'permisos');
+
+// Funciones para saber si tiene permiso para cada acción
+const puedeLeer = permisoPermisos?.descripcion.includes('R');
+const puedeCrear = permisoPermisos?.descripcion.includes('C');
+const puedeEditar = permisoPermisos?.descripcion.includes('U');
+const puedeEliminar = permisoPermisos?.descripcion.includes('D');
+
 
   const fetchPermisos = async () => {
     setLoading(true);
@@ -114,8 +137,10 @@ const PermisosList = () => {
       key: 'acciones',
       render: (_, record) => (
         <>
-          <Button icon={<FaEdit />} onClick={() => openModal(record)} style={{ marginRight: 8 }} />
-          <Button icon={<FaTrash />} danger onClick={() => handleDelete(record.id_permiso)} />
+        {puedeEditar&&(
+          <Button icon={<FaEdit />} onClick={() => openModal(record)} style={{ marginRight: 8 }} />)}
+          {puedeEliminar&&(
+          <Button icon={<FaTrash />} danger onClick={() => handleDelete(record.id_permiso)} />)}
         </>
       ),
     },
@@ -159,9 +184,10 @@ const PermisosList = () => {
       />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+        {puedeCrear &&(
         <Button type="primary" icon={<FaPlus />} onClick={() => openModal()}>
           Nuevo Permiso
-        </Button>
+        </Button>)}
         <Input
           placeholder="Buscar permisos..."
           prefix={<FaSearch />}
