@@ -50,7 +50,7 @@ function Login() {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/usuarios/login', {
+      const response = await fetch('https://aplicacion-de-seguridad-v2.onrender.com/api/usuarios/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ usuario, contrasena, id_modulo: 'SEG' }),
