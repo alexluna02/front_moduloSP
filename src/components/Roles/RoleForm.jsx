@@ -5,7 +5,7 @@ import { Button, Table, Spin, Modal, Input, Form, Select, Checkbox, List } from 
 import 'antd/dist/reset.css';
 import CustomAlert from '../Alert.js';
 import { useNavigate } from 'react-router-dom';
-
+import { validarAutorizacion } from '../utils/authUtils'; 
 const { Option } = Select;
 
 export const listarRoles = async () => {
@@ -74,14 +74,16 @@ export const asignarPermisosRol = async (roleId, permisos) => {
 
 const RoleAdmin = () => {
         const navigate = useNavigate();
-
-    // Redirección si no hay token válido
-    useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        navigate('/login');
-    }
-    }, [navigate]);
+        
+          useEffect(() => {
+            const checkToken = async () => {
+              const { valido } = await validarAutorizacion();
+              if (!valido) {
+                navigate('/login');
+              }
+            };
+            checkToken();
+          }, [navigate]);
 
     const [form] = Form.useForm();
     const [estado, setEstado] = useState(true);

@@ -4,10 +4,22 @@ import axios from 'axios';
 import { Table, Button, Input, Modal, Form, Spin } from 'antd';
 import { FaSearch, FaEdit, FaTrash } from 'react-icons/fa';
 import CustomAlert from '../Alert';
-
+import { useNavigate } from 'react-router-dom';
+import { validarAutorizacion } from '../utils/authUtils'; 
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
 
 const AuditList = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkToken = async () => {
+      const { valido } = await validarAutorizacion();
+      if (!valido) {
+        navigate('/login');
+      }
+    };
+    checkToken();
+  }, [navigate]);
   const [audits, setAudits] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [alert, setAlert] = useState({ type: '', message: '', description: '' });

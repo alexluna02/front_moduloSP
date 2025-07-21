@@ -8,19 +8,24 @@ import Inicio from '../seguridad/Inicio';
 import CustomAlert from '../Alert';
 import { listarRoles, crearRol } from '../Roles/RoleForm';
 import { useNavigate } from 'react-router-dom';
+import { validarAutorizacion } from '../utils/authUtils'; 
 
 const { Option } = Select;
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
 
 const UserList = () => {
+
+  
   const navigate = useNavigate();
 
-  // Redirección si no hay token válido
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-    }
+    const checkToken = async () => {
+      const { valido } = await validarAutorizacion();
+      if (!valido) {
+        navigate('/login');
+      }
+    };
+    checkToken();
   }, [navigate]);
 
   const [users, setUsers] = useState([]);

@@ -4,20 +4,22 @@ import { Table, Button, Input, Modal, Form, Select, Spin } from 'antd';
 import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import CustomAlert from '../Alert';
 import { useNavigate } from 'react-router-dom';
-
+import { validarAutorizacion } from '../utils/authUtils'; 
 const { Option } = Select;
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
 
 const PermisosList = () => {
   const navigate = useNavigate();
-
-// Redirección si no hay token válido
-useEffect(() => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    navigate('/login');
-  }
-}, [navigate]);
+  
+    useEffect(() => {
+      const checkToken = async () => {
+        const { valido } = await validarAutorizacion();
+        if (!valido) {
+          navigate('/login');
+        }
+      };
+      checkToken();
+    }, [navigate]);
 
   const [permisos, setPermisos] = useState([]);
   const [searchText, setSearchText] = useState('');
