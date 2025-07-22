@@ -62,7 +62,6 @@ const AuditList = () => {
 
   
 
-  // Guardar (simulado, no se envía porque es solo lectura)
   const handleModalSubmit = () => {
     setAlert({
       type: 'info',
