@@ -5,7 +5,7 @@ import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import CustomAlert from '../Alert';
 import { useNavigate } from 'react-router-dom';
 import { validarAutorizacion } from '../utils/authUtils'; 
-const { Option } = Select;
+//const { Option } = Select;
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
 
 const PermisosList = () => {
@@ -58,7 +58,7 @@ const PermisosList = () => {
   }, []);
 
   // Funciones para saber si tiene permiso para cada acción, basadas en permisoPermisos
-  const puedeLeer = permisoPermisos?.descripcion?.includes('R') || false;
+  //const puedeLeer = permisoPermisos?.descripcion?.includes('R') || false;
   const puedeCrear = permisoPermisos?.descripcion?.includes('C') || false;
   const puedeEditar = permisoPermisos?.descripcion?.includes('U') || false;
   const puedeEliminar = permisoPermisos?.descripcion?.includes('D') || false;

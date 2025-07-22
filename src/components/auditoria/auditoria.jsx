@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 //import './auditoria.css';
 import { Table, Button, Input, Modal, Form, Spin } from 'antd';
-import { FaSearch, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaSearch } from 'react-icons/fa';
 import CustomAlert from '../Alert';
 import { useNavigate } from 'react-router-dom';
 import { validarAutorizacion } from '../utils/authUtils'; 
@@ -58,48 +58,9 @@ const AuditList = () => {
     )
   );
 
-  // Eliminar auditoría
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de eliminar esta auditoría?')) {
-      setLoading(true);
-      try {
-        await axios.delete(`${API_URL}/auditoria/${id}`);
-        setAlert({
-          type: 'success',
-          message: 'Auditoría eliminada',
-          description: 'La auditoría ha sido eliminada correctamente.',
-        });
-        fetchAudits();
-      } catch (error) {
-        setAlert({
-          type: 'error',
-          message: 'Error al eliminar auditoría',
-          description: error.message,
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
+ 
 
-  // Abrir modal para editar
-  const openModal = (audit = null) => {
-    setEditingAudit(audit);
-    if (audit) {
-      form.setFieldsValue({
-        id: audit.id,
-        accion: audit.accion,
-        modulo: audit.modulo,
-        tabla: audit.tabla,
-        id_usuario: audit.id_usuario,
-        timestamp: new Date(audit.timestamp).toLocaleString(),
-        nombre_rol: audit.nombre_rol,
-      });
-    } else {
-      form.resetFields();
-    }
-    setModalOpen(true);
-  };
+  
 
   // Guardar (simulado, no se envía porque es solo lectura)
   const handleModalSubmit = () => {

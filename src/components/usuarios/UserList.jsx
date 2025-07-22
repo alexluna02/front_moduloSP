@@ -4,7 +4,6 @@ import './usuario.css';
 import { Table, Button, Input, Modal, Form, Select, Spin, Alert, Tag } from 'antd';
 import { FaSearch, FaEdit, FaTrash, FaUserPlus } from 'react-icons/fa';
 import '@ant-design/icons';
-import Inicio from '../seguridad/Inicio';
 import CustomAlert from '../Alert';
 import { listarRoles, crearRol } from '../Roles/RoleForm';
 import { useNavigate } from 'react-router-dom';
@@ -119,7 +118,7 @@ const UserList = () => {
   // Obtener permisos desde localStorage
   const permisos = JSON.parse(localStorage.getItem('permisos') || '[]');
   const permisoUsuarios = permisos.find(p => p.nombre_permiso?.toLowerCase() === 'usuarios');
-  const puedeLeer = permisoUsuarios?.descripcion.includes('R');
+  //const puedeLeer = permisoUsuarios?.descripcion.includes('R');
   const puedeCrear = permisoUsuarios?.descripcion.includes('C');
   const puedeEditar = permisoUsuarios?.descripcion.includes('U');
   const puedeEliminar = permisoUsuarios?.descripcion.includes('D');

@@ -317,7 +317,7 @@ const RoleAdmin = () => {
   };
 
   // Permissions Check
-  const puedeLeer = permisoRoles?.descripcion?.includes('R') || false;
+  //const puedeLeer = permisoRoles?.descripcion?.includes('R') || false;
   const puedeCrear = permisoRoles?.descripcion?.includes('C') || false;
   const puedeEditar = permisoRoles?.descripcion?.includes('U') || false;
   const puedeEliminar = permisoRoles?.descripcion?.includes('D') || false;
