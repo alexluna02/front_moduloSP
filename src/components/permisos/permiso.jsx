@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Button, Input, Modal, Form, Select, Spin } from 'antd';
+import { Table, Button, Input, Modal, Form, Spin } from 'antd';
 import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import CustomAlert from '../Alert';
 import { useNavigate } from 'react-router-dom';

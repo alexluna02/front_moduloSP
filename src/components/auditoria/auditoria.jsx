@@ -26,7 +26,7 @@ const AuditList = () => {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [editingAudit, setEditingAudit] = useState(null);
+  const [editingAudit, ] = useState(null);
   const [selectedDetails, setSelectedDetails] = useState(null);
   const [form] = Form.useForm();
 
