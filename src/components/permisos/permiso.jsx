@@ -11,15 +11,15 @@ const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
 const PermisosList = () => {
   const navigate = useNavigate();
   
-    useEffect(() => {
-      const checkToken = async () => {
-        const { valido } = await validarAutorizacion();
-        if (!valido) {
-          navigate('/login');
-        }
-      };
-      checkToken();
-    }, [navigate]);
+  useEffect(() => {
+    const checkToken = async () => {
+      const { valido } = await validarAutorizacion();
+      if (!valido) {
+        navigate('/login');
+      }
+    };
+    checkToken();
+  }, [navigate]);
 
   const [permisos, setPermisos] = useState([]);
   const [searchText, setSearchText] = useState('');
@@ -28,24 +28,20 @@ const PermisosList = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPermiso, setEditingPermiso] = useState(null);
   const [form] = Form.useForm();
-  // Obtener permisos desde localStorage
-const permiso = JSON.parse(localStorage.getItem('permisos') || '[]');
 
-// Buscar el permiso para este módulo (Permisos)
-const permisoPermisos = permisos.find(p => p.nombre_permiso?.toLowerCase() === 'permisos');
-
-// Funciones para saber si tiene permiso para cada acción
-const puedeLeer = permisoPermisos?.descripcion.includes('R');
-const puedeCrear = permisoPermisos?.descripcion.includes('C');
-const puedeEditar = permisoPermisos?.descripcion.includes('U');
-const puedeEliminar = permisoPermisos?.descripcion.includes('D');
-
+  // Estado para almacenar los permisos procesados
+  const [permisoPermisos, setPermisoPermisos] = useState(null);
 
   const fetchPermisos = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/permisos`);
-      setPermisos(res.data);
+      const res = await axios.get(`${API_URL}/permisos`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } // Asegúrate de enviar el token
+      });
+      setPermisos(res.data.data || res.data); // Ajusta según la estructura de la respuesta
+      // Buscar el permiso para este módulo (Permisos) después de cargar los datos
+      const permiso = (res.data.data || res.data).find(p => p.nombre_permiso?.toLowerCase() === 'permisos');
+      setPermisoPermisos(permiso);
     } catch (error) {
       setAlert({
         type: 'error',
@@ -61,6 +57,12 @@ const puedeEliminar = permisoPermisos?.descripcion.includes('D');
     fetchPermisos();
   }, []);
 
+  // Funciones para saber si tiene permiso para cada acción, basadas en permisoPermisos
+  const puedeLeer = permisoPermisos?.descripcion?.includes('R') || false;
+  const puedeCrear = permisoPermisos?.descripcion?.includes('C') || false;
+  const puedeEditar = permisoPermisos?.descripcion?.includes('U') || false;
+  const puedeEliminar = permisoPermisos?.descripcion?.includes('D') || false;
+
   const filteredPermisos = permisos.filter((permiso) =>
     ['nombre_permiso', 'descripcion', 'url_permiso', 'id_modulo'].some((field) =>
       permiso[field] ? permiso[field].toString().toLowerCase().includes(searchText.toLowerCase()) : false
@@ -71,7 +73,9 @@ const puedeEliminar = permisoPermisos?.descripcion.includes('D');
     if (window.confirm('¿Estás seguro de eliminar este permiso?')) {
       setLoading(true);
       try {
-        await axios.delete(`${API_URL}/permisos/${id}`);
+        await axios.delete(`${API_URL}/permisos/${id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
         setAlert({
           type: 'success',
           message: 'Permiso eliminado',
@@ -105,14 +109,18 @@ const puedeEliminar = permisoPermisos?.descripcion.includes('D');
       const values = await form.validateFields();
       setLoading(true);
       if (editingPermiso) {
-        await axios.put(`${API_URL}/permisos/${editingPermiso.id_permiso}`, values);
+        await axios.put(`${API_URL}/permisos/${editingPermiso.id_permiso}`, values, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
         setAlert({
           type: 'success',
           message: 'Permiso actualizado',
           description: 'El permiso fue actualizado correctamente.',
         });
       } else {
-        await axios.post(`${API_URL}/permisos`, values);
+        await axios.post(`${API_URL}/permisos`, values, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
         setAlert({
           type: 'success',
           message: 'Permiso creado',
@@ -122,7 +130,7 @@ const puedeEliminar = permisoPermisos?.descripcion.includes('D');
       fetchPermisos();
       setModalOpen(false);
     } catch (error) {
-      console.error('Error en handleModalSubmit:', error); // Depuración
+      console.error('Error en handleModalSubmit:', error);
       setAlert({
         type: 'error',
         message: 'Error al guardar permiso',
@@ -139,10 +147,12 @@ const puedeEliminar = permisoPermisos?.descripcion.includes('D');
       key: 'acciones',
       render: (_, record) => (
         <>
-        {puedeEditar&&(
-          <Button icon={<FaEdit />} onClick={() => openModal(record)} style={{ marginRight: 8 }} />)}
-          {puedeEliminar&&(
-          <Button icon={<FaTrash />} danger onClick={() => handleDelete(record.id_permiso)} />)}
+          {puedeEditar && (
+            <Button icon={<FaEdit />} onClick={() => openModal(record)} style={{ marginRight: 8 }} />
+          )}
+          {puedeEliminar && (
+            <Button icon={<FaTrash />} danger onClick={() => handleDelete(record.id_permiso)} />
+          )}
         </>
       ),
     },
@@ -186,10 +196,11 @@ const puedeEliminar = permisoPermisos?.descripcion.includes('D');
       />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        {puedeCrear &&(
-        <Button type="primary" icon={<FaPlus />} onClick={() => openModal()}>
-          Nuevo Permiso
-        </Button>)}
+        {puedeCrear && (
+          <Button type="primary" icon={<FaPlus />} onClick={() => openModal()}>
+            Nuevo Permiso
+          </Button>
+        )}
         <Input
           placeholder="Buscar permisos..."
           prefix={<FaSearch />}
@@ -246,7 +257,6 @@ const puedeEliminar = permisoPermisos?.descripcion.includes('D');
             >
               <Input placeholder="Ej: 1" />
             </Form.Item>
-
           </Form>
         </Spin>
       </Modal>
