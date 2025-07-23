@@ -11,7 +11,7 @@ const { Option } = Select;
 // API Functions
 export const listarRoles = async () => {
   try {
-    const res = await fetch('/api/roles', {
+    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles`, { // Usar REACT_APP_API_URL
       headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
     });
     if (!res.ok) {
@@ -31,7 +31,7 @@ export const listarRoles = async () => {
 
 export const crearRol = async (roleData) => {
   try {
-    const res = await fetch('/api/roles', {
+    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles`, { // Usar REACT_APP_API_URL
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ export const crearRol = async (roleData) => {
 
 export const listarPermisos = async () => {
   try {
-    const res = await fetch('/api/permisos', {
+    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/permisos`, { // Usar REACT_APP_API_URL
       headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
     });
     if (!res.ok) {
@@ -72,7 +72,7 @@ export const listarPermisos = async () => {
 
 export const asignarPermisosRol = async (roleId, permisos) => {
   try {
-    const res = await fetch(`/api/roles_permisos/roles/${roleId}/permisos`, {
+    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles_permisos/roles/${roleId}/permisos`, { // Usar REACT_APP_API_URL
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -91,7 +91,6 @@ export const asignarPermisosRol = async (roleId, permisos) => {
     return { success: false, error };
   }
 };
-
 
 const RoleAdmin = () => {
   const navigate = useNavigate();
@@ -154,7 +153,7 @@ const RoleAdmin = () => {
     const roleData = { nombre_rol: values.nombreRol, descripcion: values.descripcion, estado };
     try {
       if (editingRoleId) {
-        const res = await fetch(`/api/roles/${editingRoleId}`, {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles/${editingRoleId}`, { // Usar REACT_APP_API_URL
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -223,7 +222,7 @@ const RoleAdmin = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de eliminar este rol?')) {
       try {
-        const res = await fetch(`/api/roles/${id}`, {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles/${id}`, { // Usar REACT_APP_API_URL
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
@@ -245,52 +244,51 @@ const RoleAdmin = () => {
   };
 
   const handleEdit = async (role) => {
-  setEditingRoleId(role.id_rol);
-  form.setFieldsValue({ nombreRol: role.nombre_rol, descripcion: role.descripcion });
-  setEstado(role.estado);
-  setIsModalOpen(true);
-  setLoadingPermisos(true);
-  try {
-    const res = await fetch(`/api/roles_permisos/roles/${role.id_rol}/permisos`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setSelectedPermisos(data.data.map(p => p.id_permiso)); // ✅ Corrección
-    } else {
+    setEditingRoleId(role.id_rol);
+    form.setFieldsValue({ nombreRol: role.nombre_rol, descripcion: role.descripcion });
+    setEstado(role.estado);
+    setIsModalOpen(true);
+    setLoadingPermisos(true);
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles_permisos/roles/${role.id_rol}/permisos`, { // Usar REACT_APP_API_URL
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedPermisos(data.data.map(p => p.id_permiso));
+      } else {
+        setSelectedPermisos([]);
+      }
+    } catch (e) {
+      console.error('Error al cargar permisos:', e);
       setSelectedPermisos([]);
+    } finally {
+      setLoadingPermisos(false);
     }
-  } catch (e) {
-    console.error('Error al cargar permisos:', e);
-    setSelectedPermisos([]);
-  } finally {
-    setLoadingPermisos(false);
-  }
-};
+  };
 
-const handleDetails = async (role) => {
-  setDetalleRol(role);
-  setDetallePermisos([]);
-  setDetalleVisible(true);
-  setLoadingPermisos(true);
-  try {
-    const res = await fetch(`/api/roles_permisos/roles/${role.id_rol}/permisos`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setDetallePermisos(data.data || []); // <-- CORREGIDO
-    } else {
-      setDetallePermisos([]);
-    }
-  } catch (e) {
-    console.error('Error al cargar permisos:', e);
+  const handleDetails = async (role) => {
+    setDetalleRol(role);
     setDetallePermisos([]);
-  } finally {
-    setLoadingPermisos(false);
-  }
-};
-
+    setDetalleVisible(true);
+    setLoadingPermisos(true);
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles_permisos/roles/${role.id_rol}/permisos`, { // Usar REACT_APP_API_URL
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDetallePermisos(data.data || []);
+      } else {
+        setDetallePermisos([]);
+      }
+    } catch (e) {
+      console.error('Error al cargar permisos:', e);
+      setDetallePermisos([]);
+    } finally {
+      setLoadingPermisos(false);
+    }
+  };
 
   // Modal Handlers
   const openModal = () => {
@@ -320,7 +318,6 @@ const handleDetails = async (role) => {
   };
 
   // Permissions Check
-  //const puedeLeer = permisoRoles?.descripcion?.includes('R') || false;
   const puedeCrear = permisoRoles?.descripcion?.includes('C') || false;
   const puedeEditar = permisoRoles?.descripcion?.includes('U') || false;
   const puedeEliminar = permisoRoles?.descripcion?.includes('D') || false;
@@ -335,28 +332,27 @@ const handleDetails = async (role) => {
   // Table Columns
   const columns = [
     {
-  title: 'Acciones',
-  key: 'acciones',
-  render: (_, role) => (
-    <div className="flex space-x-2">
-      {puedeEditar && (
-        <Button
-          icon={<FaEdit />}
-          onClick={() => handleEdit(role)}
-          className="role-action-btn edit"
-        />
-      )}
-      {puedeEliminar && (
-        <Button
-          icon={<FaTrash />}
-          onClick={() => handleDelete(role.id_rol)}
-          className="role-action-btn delete"
-        />
-      )}
-    </div>
-  ),
-},
-
+      title: 'Acciones',
+      key: 'acciones',
+      render: (_, role) => (
+        <div className="flex space-x-2">
+          {puedeEditar && (
+            <Button
+              icon={<FaEdit />}
+              onClick={() => handleEdit(role)}
+              className="role-action-btn edit"
+            />
+          )}
+          {puedeEliminar && (
+            <Button
+              icon={<FaTrash />}
+              onClick={() => handleDelete(role.id_rol)}
+              className="role-action-btn delete"
+            />
+          )}
+        </div>
+      ),
+    },
     {
       title: 'ID',
       dataIndex: 'id_rol',
@@ -389,16 +385,15 @@ const handleDetails = async (role) => {
       ),
     },
     {
-  title: 'Estado',
-  dataIndex: 'estado',
-  key: 'estado',
-  render: estado => (
-    <span className={`role-status ${estado ? 'active' : 'inactive'}`}>
-      {estado ? 'Activo' : 'Inactivo'}
-    </span>
-  ),
-}
-
+      title: 'Estado',
+      dataIndex: 'estado',
+      key: 'estado',
+      render: estado => (
+        <span className={`role-status ${estado ? 'active' : 'inactive'}`}>
+          {estado ? 'Activo' : 'Inactivo'}
+        </span>
+      ),
+    }
   ];
 
   return (
@@ -523,89 +518,85 @@ const handleDetails = async (role) => {
       </Modal>
 
       <Modal
-  title="Asignar Permisos"
-  open={isPermisosModalOpen}
-  onCancel={closePermisosModal}
-  footer={[
-    <Button
-      key="cancel"
-      onClick={closePermisosModal}
-      className="border-gray-300 hover:bg-gray-100"
-    >
-      Cancelar
-    </Button>,
-    <Button
-      key="submit"
-      type="primary"
-      onClick={handlePermisosSubmit}
-      className="bg-blue-600 hover:bg-blue-700 text-white"
-    >
-      Guardar
-    </Button>,
-  ]}
-  destroyOnClose
-  className="rounded-lg"
->
-  <Spin spinning={loadingPermisos} tip="Cargando permisos...">
-    <div className="space-y-4">
+        title="Asignar Permisos"
+        open={isPermisosModalOpen}
+        onCancel={closePermisosModal}
+        footer={[
+          <Button
+            key="cancel"
+            onClick={closePermisosModal}
+            className="border-gray-300 hover:bg-gray-100"
+          >
+            Cancelar
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            onClick={handlePermisosSubmit}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Guardar
+          </Button>,
+        ]}
+        destroyOnClose
+        className="rounded-lg"
+      >
+        <Spin spinning={loadingPermisos} tip="Cargando permisos...">
+          <div className="space-y-4">
+            {/* Permisos asignados */}
+            <div>
+              <p className="font-semibold text-gray-700 mb-1">Permisos actuales:</p>
+              <div className="flex flex-wrap gap-2">
+                {selectedPermisos.map(id => {
+                  const permiso = permisos.find(p => p.id_permiso === id);
+                  return (
+                    <span
+                      key={id}
+                      className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                    >
+                      {permiso?.nombre_permiso} ({permiso?.nombre_modulo})
+                      <button
+                        onClick={() => {
+                          setSelectedPermisos(prev => prev.filter(pid => pid !== id));
+                        }}
+                        className="ml-2 text-red-500 hover:text-red-700 font-bold"
+                        title="Eliminar"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  );
+                })}
+                {selectedPermisos.length === 0 && <p className="text-gray-500">Ningún permiso asignado</p>}
+              </div>
+            </div>
 
-      {/* Permisos asignados */}
-      <div>
-        <p className="font-semibold text-gray-700 mb-1">Permisos actuales:</p>
-        <div className="flex flex-wrap gap-2">
-          {selectedPermisos.map(id => {
-            const permiso = permisos.find(p => p.id_permiso === id);
-            return (
-              <span
-                key={id}
-                className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+            {/* Menú desplegable para agregar */}
+            <div>
+              <p className="font-semibold text-gray-700 mb-1">Agregar nuevo permiso:</p>
+              <Select
+                showSearch
+                placeholder="Selecciona un permiso para agregar"
+                className="w-full"
+                onChange={(value) => {
+                  if (value && !selectedPermisos.includes(value)) {
+                    setSelectedPermisos([...selectedPermisos, value]);
+                  }
+                }}
+                value={undefined}
               >
-                {permiso?.nombre_permiso} ({permiso?.nombre_modulo})
-                <button
-                  onClick={() => {
-                    setSelectedPermisos(prev => prev.filter(pid => pid !== id));
-                  }}
-                  className="ml-2 text-red-500 hover:text-red-700 font-bold"
-                  title="Eliminar"
-                >
-                  ×
-                </button>
-              </span>
-            );
-          })}
-          {selectedPermisos.length === 0 && <p className="text-gray-500">Ningún permiso asignado</p>}
-        </div>
-      </div>
-
-      {/* Menú desplegable para agregar */}
-      <div>
-        <p className="font-semibold text-gray-700 mb-1">Agregar nuevo permiso:</p>
-        <Select
-  showSearch
-  placeholder="Selecciona un permiso para agregar"
-  className="w-full"
-  onChange={(value) => {
-    if (value && !selectedPermisos.includes(value)) {
-      setSelectedPermisos([...selectedPermisos, value]);
-    }
-  }}
-  value={undefined} // para que se resetee después de seleccionar
->
-  {permisos
-    .filter(p => !selectedPermisos.includes(p.id_permiso))
-    .map(permiso => (
-      <Option key={permiso.id_permiso} value={permiso.id_permiso}>
-        {permiso.nombre_permiso} ({permiso.nombre_modulo})
-      </Option>
-    ))}
-</Select>
-
-      </div>
-
-    </div>
-  </Spin>
-</Modal>
-
+                {permisos
+                  .filter(p => !selectedPermisos.includes(p.id_permiso))
+                  .map(permiso => (
+                    <Option key={permiso.id_permiso} value={permiso.id_permiso}>
+                      {permiso.nombre_permiso} ({permiso.nombre_modulo})
+                    </Option>
+                  ))}
+              </Select>
+            </div>
+          </div>
+        </Spin>
+      </Modal>
 
       <Modal
         title="Detalles del Rol"
