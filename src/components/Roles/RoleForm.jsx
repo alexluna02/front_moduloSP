@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaEdit, FaTrash, FaInfoCircle, FaSearch, FaLock } from 'react-icons/fa';
-import { Button, Table, Spin, Modal, Input, Form, Select, Checkbox, List } from 'antd';
-import axios from 'axios'; // Importar axios
+import { FaEdit, FaTrash, FaInfoCircle, FaSearch, FaLock, FaPlus, FaFilePdf } from 'react-icons/fa';
+import { Button, Table, Spin, Modal, Input, Form, Select, Checkbox } from 'antd';
+import axios from 'axios';
 import CustomAlert from '../Alert.js';
 import { validarAutorizacion } from '../utils/authUtils';
 import './RoleAdmin.css';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const { Option } = Select;
 
-// Definir la constante API_URL
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
 
 // API Functions
@@ -73,7 +74,6 @@ export const asignarPermisosRol = async (roleId, permisos) => {
   }
 };
 
-// Componente RoleAdmin
 const RoleAdmin = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
@@ -95,7 +95,6 @@ const RoleAdmin = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Check authentication
   useEffect(() => {
     const checkToken = async () => {
       const { valido } = await validarAutorizacion();
@@ -106,7 +105,6 @@ const RoleAdmin = () => {
     checkToken();
   }, [navigate]);
 
-  // Fetch roles and permissions
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -129,7 +127,6 @@ const RoleAdmin = () => {
     fetchData();
   }, []);
 
-  // Handlers
   const handleSubmit = async (values) => {
     setLoading(true);
     const roleData = { nombre_rol: values.nombreRol, descripcion: values.descripcion, estado };
@@ -257,7 +254,50 @@ const RoleAdmin = () => {
     }
   };
 
-  // Modal Handlers
+  const generatePDF = async () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('Reporte de Roles', 14, 22);
+
+    const tableData = await Promise.all(filteredRoles.map(async (role) => {
+      try {
+        const res = await axios.get(`${API_URL}/roles_permisos/roles/${role.id_rol}/permisos`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const permisosList = res.data.data.map(p => `${p.nombre_permiso} (${p.nombre_modulo})`).join(', ');
+        return [
+          role.id_rol,
+          role.nombre_rol,
+          role.descripcion || 'Sin descripción',
+          role.estado ? 'Activo' : 'Inactivo',
+          permisosList || 'Ningún permiso asociado'
+        ];
+      } catch (e) {
+        console.error('Error al cargar permisos para el rol:', role.id_rol, e);
+        return [
+          role.id_rol,
+          role.nombre_rol,
+          role.descripcion || 'Sin descripción',
+          role.estado ? 'Activo' : 'Inactivo',
+          'Error al cargar permisos'
+        ];
+      }
+    }));
+
+    autoTable(doc, {
+      head: [['ID', 'Nombre', 'Descripción', 'Estado', 'Permisos Asociados']],
+      body: tableData,
+      startY: 30,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [22, 160, 133] },
+      columnStyles: {
+        4: { cellWidth: 60 }
+      }
+    });
+
+    doc.save('Reporte_Roles.pdf');
+  };
+
   const openModal = () => {
     setEditingRoleId(null);
     form.resetFields();
@@ -284,19 +324,16 @@ const RoleAdmin = () => {
     setIsPermisosModalOpen(false);
   };
 
-  // Permissions Check
   const puedeCrear = permisoRoles?.descripcion?.includes('C') || false;
   const puedeEditar = permisoRoles?.descripcion?.includes('U') || false;
   const puedeEliminar = permisoRoles?.descripcion?.includes('D') || false;
 
-  // Filtered Roles
   const filteredRoles = roles.filter(item =>
     Object.values(item).some(value =>
       String(value).toLowerCase().includes(searchText.toLowerCase())
     )
   );
 
-  // Table Columns
   const columns = [
     {
       title: 'Acciones',
@@ -363,9 +400,40 @@ const RoleAdmin = () => {
     }
   ];
 
+  const permisosColumns = [
+    {
+      title: 'Permiso',
+      dataIndex: 'nombre_permiso',
+      key: 'nombre_permiso',
+    },
+    {
+      title: 'Módulo',
+      dataIndex: 'nombre_modulo',
+      key: 'nombre_modulo',
+    },
+    {
+      title: 'Descripción',
+      dataIndex: 'descripcion',
+      key: 'descripcion',
+      render: desc => desc || 'Sin descripción',
+    },
+    {
+      title: 'Acción',
+      key: 'accion',
+      render: (_, permiso) => (
+        <Button
+          onClick={() => setSelectedPermisos(prev => prev.filter(pid => pid !== permiso.id_permiso))}
+          className="text-red-500 hover:text-red-700 font-bold"
+        >
+          ×
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6">Lista de Roles</h2>
+      <h2>Administrar Roles del Sistema</h2>
 
       <CustomAlert
         type={alert.type}
@@ -374,16 +442,27 @@ const RoleAdmin = () => {
         onClose={() => setAlert({ type: '', message: '', description: '' })}
       />
 
-      <div className="flex justify-between items-center mb-6">
-        {puedeCrear && (
+      <div className="flex justify-between items-center mb-6 w-full">
+        <div>
+          {puedeCrear && (
+            <Button
+              type="primary"
+              onClick={openModal}
+              icon={<FaPlus />}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mr-2"
+            >
+              Nuevo Rol
+            </Button>
+          )}
           <Button
-            type="primary"
-            onClick={openModal}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
+            type="default"
+            onClick={generatePDF}
+            icon={<FaFilePdf />}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded"
           >
-            Crear
+            Generar Reporte
           </Button>
-        )}
+        </div>
         <Input
           placeholder="Buscar..."
           prefix={<FaSearch className="text-gray-400" />}
@@ -507,40 +586,27 @@ const RoleAdmin = () => {
         ]}
         destroyOnClose
         className="rounded-lg"
+        width={800}
       >
         <Spin spinning={loadingPermisos} tip="Cargando permisos...">
           <div className="space-y-4">
-            {/* Permisos asignados */}
             <div>
-              <p className="font-semibold text-gray-700 mb-1">Permisos actuales:</p>
-              <div className="flex flex-wrap gap-2">
-                {selectedPermisos.map(id => {
-                  const permiso = permisos.find(p => p.id_permiso === id);
-                  return (
-                    <span
-                      key={id}
-                      className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                    >
-                      {permiso?.nombre_permiso} ({permiso?.nombre_modulo})
-                      <button
-                        onClick={() => {
-                          setSelectedPermisos(prev => prev.filter(pid => pid !== id));
-                        }}
-                        className="ml-2 text-red-500 hover:text-red-700 font-bold"
-                        title="Eliminar"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  );
-                })}
-                {selectedPermisos.length === 0 && <p className="text-gray-500">Ningún permiso asignado</p>}
-              </div>
+              <p className="font-semibold text-gray-700 mb-2">Permisos actuales:</p>
+              {selectedPermisos.length > 0 ? (
+                <Table
+                  dataSource={selectedPermisos.map(id => permisos.find(p => p.id_permiso === id))}
+                  columns={permisosColumns}
+                  rowKey="id_permiso"
+                  pagination={false}
+                  className="bg-white shadow-md rounded-lg"
+                />
+              ) : (
+                <p className="text-gray-500">Ningún permiso asignado</p>
+              )}
             </div>
 
-            {/* Menú desplegable para agregar */}
             <div>
-              <p className="font-semibold text-gray-700 mb-1">Agregar nuevo permiso:</p>
+              <p className="font-semibold text-gray-700 mb-2">Agregar nuevo permiso:</p>
               <Select
                 showSearch
                 placeholder="Selecciona un permiso para agregar"
@@ -551,12 +617,24 @@ const RoleAdmin = () => {
                   }
                 }}
                 value={undefined}
+                optionLabelProp="label"
+                filterOption={(input, option) =>
+                  option.children.props.children.toLowerCase().includes(input.toLowerCase())
+                }
               >
                 {permisos
                   .filter(p => !selectedPermisos.includes(p.id_permiso))
                   .map(permiso => (
-                    <Option key={permiso.id_permiso} value={permiso.id_permiso}>
-                      {permiso.nombre_permiso} ({permiso.nombre_modulo})
+                    <Option
+                      key={permiso.id_permiso}
+                      value={permiso.id_permiso}
+                      label={`${permiso.nombre_permiso} (${permiso.nombre_modulo})`}
+                    >
+                      <div>
+                        <strong>{permiso.nombre_permiso}</strong> ({permiso.nombre_modulo})
+                        <br />
+                        <span className="text-gray-500">{permiso.descripcion || 'Sin descripción'}</span>
+                      </div>
                     </Option>
                   ))}
               </Select>
@@ -588,6 +666,12 @@ const RoleAdmin = () => {
                   columns={[
                     { title: 'Permiso', dataIndex: 'nombre_permiso', key: 'nombre_permiso' },
                     { title: 'Módulo', dataIndex: 'nombre_modulo', key: 'nombre_modulo' },
+                    {
+                      title: 'Descripción',
+                      dataIndex: 'descripcion',
+                      key: 'descripcion',
+                      render: desc => desc || 'Sin descripción',
+                    },
                   ]}
                   pagination={false}
                   rowKey="id_permiso"

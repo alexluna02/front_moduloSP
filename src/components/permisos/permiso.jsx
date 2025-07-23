@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Button, Input, Modal, Form, Spin, Select,Tag } from 'antd';
-import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import { Table, Button, Input, Modal, Form, Spin, Select, Tag } from 'antd';
+import { FaSearch, FaEdit, FaTrash, FaPlus, FaFilePdf } from 'react-icons/fa';
 import CustomAlert from '../Alert';
 import { useNavigate } from 'react-router-dom';
 import { validarAutorizacion } from '../utils/authUtils';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable'; // Importación explícita
 
 const { Option } = Select;
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
@@ -51,18 +53,16 @@ const PermisosList = () => {
     }
   };
 
-  // Extrae solo las letras A–Z de un string (p.ej. '{"{"R"}","C"}')
-const parseLetters = text => text?.match(/[A-Z]/g) || [];
+  const parseLetters = text => text?.match(/[A-Z]/g) || [];
 
-// Renderiza cada tag con únicamente su valor (C, R, U, D)
-const tagRender = props => {
-  const { value, closable, onClose } = props;
-  return (
-    <Tag closable={closable} onClose={onClose} style={{ marginRight: 3 }}>
-      {value}
-    </Tag>
-  );
-};
+  const tagRender = props => {
+    const { value, closable, onClose } = props;
+    return (
+      <Tag closable={closable} onClose={onClose} style={{ marginRight: 3 }}>
+        {value}
+      </Tag>
+    );
+  };
 
   const fetchModulos = async () => {
     try {
@@ -119,15 +119,44 @@ const tagRender = props => {
     }
   };
 
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('Reporte de Permisos', 14, 22);
+
+    const tableData = filteredPermisos.map(permiso => {
+      const modulo = modulos.find(m => m.id_modulo === permiso.id_modulo);
+      const letras = (permiso.descripcion.match(/[A-Z]/g) || []);
+      const ordenCRUD = ['C', 'R', 'U', 'D'];
+      const sorted = ordenCRUD.filter(letter => letras.includes(letter)).join(', ');
+      return [
+        `#${permiso.id_permiso.toString().padStart(3, '0')}`,
+        permiso.nombre_permiso,
+        sorted,
+        permiso.url_permiso,
+        modulo ? `${modulo.nombre_modulo} (#${permiso.id_modulo})` : `#${permiso.id_modulo}`
+      ];
+    });
+
+    // Usar autoTable explícitamente
+    autoTable(doc, {
+      head: [['ID', 'Nombre', 'Descripción', 'URL Permiso', 'Módulo']],
+      body: tableData,
+      startY: 30,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [22, 160, 133] },
+    });
+
+    doc.save('Reporte_Permisos.pdf');
+  };
+
   const openModal = (permiso = null) => {
     setEditingPermiso(permiso);
     if (permiso) {
-       // convertimos '{"{"R"}","C"}' → ['R','C']
-    form.setFieldsValue({
-      ...permiso,
-     descripcion: parseLetters(permiso.descripcion)
-   });
-
+      form.setFieldsValue({
+        ...permiso,
+        descripcion: parseLetters(permiso.descripcion)
+      });
     } else {
       form.resetFields();
     }
@@ -199,18 +228,16 @@ const tagRender = props => {
       sorter: (a, b) => a.nombre_permiso.localeCompare(b.nombre_permiso),
     },
     {
-    title: 'Descripcion',
-    dataIndex: 'descripcion',
-    key: 'descripcion',
-   render: texto => {
-  const letras = (texto.match(/[A-Z]/g) || []);
-  const ordenCRUD = ['C','R','U','D'];
-  // Filtra y ordena según CRUD
-  const sorted = ordenCRUD.filter(letter => letras.includes(letter));
-  // Devuelve cadena separada por comas
-  return sorted.join(', ');
-}
-  },
+      title: 'Descripción',
+      dataIndex: 'descripcion',
+      key: 'descripcion',
+      render: texto => {
+        const letras = (texto.match(/[A-Z]/g) || []);
+        const ordenCRUD = ['C', 'R', 'U', 'D'];
+        const sorted = ordenCRUD.filter(letter => letras.includes(letter));
+        return sorted.join(', ');
+      }
+    },
     {
       title: 'URL Permiso',
       dataIndex: 'url_permiso',
@@ -240,11 +267,16 @@ const tagRender = props => {
       />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        {puedeCrear && (
-          <Button type="primary" icon={<FaPlus />} onClick={() => openModal()}>
-            Nuevo Permiso
+        <div>
+          {puedeCrear && (
+            <Button type="primary" icon={<FaPlus />} onClick={() => openModal()} style={{ marginRight: 8 }}>
+              Nuevo Permiso
+            </Button>
+          )}
+          <Button type="default" icon={<FaFilePdf />} onClick={generatePDF}>
+            Generar Reporte
           </Button>
-        )}
+        </div>
         <Input
           placeholder="Buscar permisos..."
           prefix={<FaSearch />}
@@ -281,23 +313,22 @@ const tagRender = props => {
             </Form.Item>
 
             <Form.Item
-  label="Descripción"
-  name="descripcion"
-  rules={[{ required: true, message: 'La descripción es obligatoria' }]}
->
-
- <Select
-   mode="multiple"
-   placeholder="Seleccione operación"
-   tagRender={tagRender}
-   allowClear
- >
-    <Option value="C">Crear (C)</Option>
-    <Option value="R">Leer (R)</Option>
-    <Option value="U">Actualizar (U)</Option>
-    <Option value="D">Eliminar (D)</Option>
-  </Select>
-</Form.Item>
+              label="Descripción"
+              name="descripcion"
+              rules={[{ required: true, message: 'La descripción es obligatoria' }]}
+            >
+              <Select
+                mode="multiple"
+                placeholder="Seleccione operación"
+                tagRender={tagRender}
+                allowClear
+              >
+                <Option value="C">Crear (C)</Option>
+                <Option value="R">Leer (R)</Option>
+                <Option value="U">Actualizar (U)</Option>
+                <Option value="D">Eliminar (D)</Option>
+              </Select>
+            </Form.Item>
 
             <Form.Item
               label="URL Permiso"
