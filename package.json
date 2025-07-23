@@ -24,8 +24,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
     "test": "react-scripts test",
+    "build": "react-scripts build && copyfiles _redirects build",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -46,5 +46,8 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "https://aplicacion-de-seguridad-v2.onrender.com/"
+  "proxy": "https://aplicacion-de-seguridad-v2.onrender.com/",
+  "devDependencies": {
+    "copyfiles": "^2.4.1"
+  }
 }
