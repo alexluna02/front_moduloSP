@@ -11,7 +11,7 @@ const { Option } = Select;
 // API Functions
 export const listarRoles = async () => {
   try {
-    const res = await fetch('https://aplicacion-de-seguridad-v2.onrender.com/api/roles', {
+    const res = await fetch('/api/roles', {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
     });
     if (!res.ok) {
@@ -31,7 +31,7 @@ export const listarRoles = async () => {
 
 export const crearRol = async (roleData) => {
   try {
-    const res = await fetch('https://aplicacion-de-seguridad-v2.onrender.com/api/roles', {
+    const res = await fetch('/api/roles', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ export const crearRol = async (roleData) => {
 
 export const listarPermisos = async () => {
   try {
-    const res = await fetch('https://aplicacion-de-seguridad-v2.onrender.com/api/permisos', {
+    const res = await fetch('/api/permisos', {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
     });
     if (!res.ok) {
@@ -72,7 +72,7 @@ export const listarPermisos = async () => {
 
 export const asignarPermisosRol = async (roleId, permisos) => {
   try {
-    const res = await fetch(`https://aplicacion-de-seguridad-v2.onrender.com/api/roles_permisos/roles/${roleId}/permisos`, {
+    const res = await fetch(`/api/roles_permisos/roles/${roleId}/permisos`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -152,7 +152,7 @@ const RoleAdmin = () => {
     const roleData = { nombre_rol: values.nombreRol, descripcion: values.descripcion, estado };
     try {
       if (editingRoleId) {
-        const res = await fetch(`https://aplicacion-de-seguridad-v2.onrender.com/api/roles/${editingRoleId}`, {
+        const res = await fetch(`/api/roles/${editingRoleId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -221,7 +221,7 @@ const RoleAdmin = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de eliminar este rol?')) {
       try {
-        const res = await fetch(`https://aplicacion-de-seguridad-v2.onrender.com/api/roles/${id}`, {
+        const res = await fetch(`/api/roles/${id}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
@@ -249,7 +249,7 @@ const RoleAdmin = () => {
     setIsModalOpen(true);
     setLoadingPermisos(true);
     try {
-      const res = await fetch(`https://aplicacion-de-seguridad-v2.onrender.com/api/roles_permisos/roles/${role.id_rol}/permisos`, {
+      const res = await fetch(`/api/roles_permisos/roles/${role.id_rol}/permisos`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (res.ok) {
@@ -272,7 +272,7 @@ const RoleAdmin = () => {
     setDetalleVisible(true);
     setLoadingPermisos(true);
     try {
-      const res = await fetch(`https://aplicacion-de-seguridad-v2.onrender.com/api/roles_permisos/roles/${role.id_rol}/permisos`, {
+      const res = await fetch(`/api/roles_permisos/roles/${role.id_rol}/permisos`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (res.ok) {
