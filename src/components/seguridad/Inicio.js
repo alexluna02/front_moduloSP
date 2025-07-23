@@ -1,13 +1,11 @@
 import React from 'react';
 import Layout from '../plantilla/plantilla';
 import '../seguridad/inicio.css';
-import { Link } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 
-const Inicio = ({ children }) => {
-  // Leer permisos del localStorage
+const Inicio = () => {
   const permisos = JSON.parse(localStorage.getItem('permisos') || '[]');
 
-  // Función para validar si el usuario tiene permiso de lectura (R) para una sección
   const tienePermiso = (nombre) =>
     permisos.some(p =>
       p.nombre_permiso?.toLowerCase() === nombre.toLowerCase() &&
@@ -36,7 +34,7 @@ const Inicio = ({ children }) => {
         </aside>
 
         <main className="contenidoindex">
-          {children}
+          <Outlet /> {/* Aquí se renderiza el contenido de cada ruta hija */}
         </main>
       </div>
     </Layout>
