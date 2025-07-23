@@ -1,209 +1,202 @@
-/* Estilo general del contenedor */
-.role-admin-container {
-  background-color: #1a1a1a;
-  color: #fff;
+/* RoleAdmin.css */
+
+/* Contenedor general */
+.p-6 {
+  padding: 1.5rem;
+  background-color: #f9fafb; /* gris claro */
   min-height: 100vh;
-  padding: 20px;
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f2937; /* gris oscuro */
 }
 
-/* Encabezado */
-.role-admin-header {
+/* Título centrado */
+h2.text-3xl {
+  text-align: center;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #111827;
+}
+
+/* Contenedor de botones y búsqueda */
+.flex.justify-between.items-center {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  background-color: #2d2d2d;
-  padding: 10px 20px;
-  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.role-admin-header h2 {
-  font-size: 24px;
-  margin: 0;
-  color: #fff;
-}
-
-.role-admin-header p {
-  font-size: 14px;
-  color: #bbb;
-  margin: 4px 0 0;
-}
-
-/* Botón crear */
-.btn-create {
-  background-color: #1890ff;
-  border: none;
+/* Botón Crear rol */
+button.bg-blue-600 {
+  background-color: #2563eb;
   color: white;
-  padding: 8px 16px;
-  border-radius: 6px;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: none;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
+  transition: background-color 0.3s ease;
 }
 
-.btn-create:hover {
-  background-color: #40a9ff;
+button.bg-blue-600:hover {
+  background-color: #1d4ed8;
+}
+
+/* Input de búsqueda */
+input.w-64 {
+  width: 16rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  transition: border-color 0.3s ease;
+}
+
+input.w-64:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
 }
 
 /* Tabla */
 .ant-table {
-  background-color: #fff;
-  border-radius: 8px;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   overflow: hidden;
-  color: #333;
 }
 
-.ant-table-thead > tr > th {
-  background-color: #f5f5f5;
-  font-weight: 500;
-  border-bottom: 1px solid #ddd;
-  padding: 12px;
-  text-align: left;
-}
-
-.ant-table-tbody > tr > td {
-  border-bottom: 1px solid #eee;
-  padding: 12px;
-  text-align: left;
-}
-
-.ant-table-tbody > tr:hover {
-  background-color: #f0f0f0;
-}
-
-/* Acciones */
+/* Botones acción en tabla */
 .role-action-btn {
-  background: none;
   border: none;
   cursor: pointer;
-  margin-right: 8px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  color: #2563eb;
+  transition: background-color 0.2s ease;
 }
 
-
-
-.role-action-btn:hover {
-  opacity: 0.8;
-}
-.role-status {
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  display: inline-flex;
-  align-items: center;
-  font-weight: bold;
-}
-
-.role-status.active {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.role-status.inactive {
-  background-color: #f8d7da;
-  color: #721c24;
-}
-
-
-/* Input búsqueda */
-.search-input {
-  border-radius: 4px;
-  height: 32px;
-  width: 200px;
-  background-color: #fff;
-  color: #333;
-  padding-left: 10px;
-}
-
-.search-input::placeholder {
-  color: #999;
-}
-
-/* Botones modal */
-.modal-btn {
-  background-color: transparent !important;
-  border: none !important;
-  color: #333 !important;
-  font-weight: bold !important;
-  box-shadow: none !important;
-}
-
-.modal-btn:hover {
-  background-color: #1890ff !important;
-  color: white !important;
-}
-
-/* Botón guardar */
-.btn-save {
-  background-color: #1890ff !important;
-  border-color: #1890ff !important;
-  color: white !important;
-  font-weight: 600;
-  border-radius: 6px;
-}
-
-.btn-save:hover {
-  background-color: #40a9ff !important;
-  border-color: #40a9ff !important;
-}
-
-/* Inputs en formularios */
-.ant-input,
-.ant-input-textarea,
-.ant-select-selector {
-  border-radius: 6px !important;
-}
-
-/* Checkboxes y lista */
-.ant-checkbox-wrapper {
-  color: #333;
-  font-size: 14px;
-}
-
-/* Modales */
-.ant-modal-content {
-  border-radius: 10px;
-  padding: 24px;
-}
-
-/* Tamaño iconos orden */
-.ant-table-column-sorter-up,
-.ant-table-column-sorter-down {
-  font-size: 18px !important;
-  transform: scale(1.3);
-}
-.role-action-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  margin-right: 8px;
-}
-
-.role-action-btn.edit {
-  color: #000000;
+.role-action-btn.edit:hover {
+  background-color: #e0e7ff;
 }
 
 .role-action-btn.delete {
-  color: #ff4d4f;
+  color: #dc2626;
 }
 
-.role-action-btn:hover {
-  opacity: 0.6;
+.role-action-btn.delete:hover {
+  background-color: #fee2e2;
 }
 
+/* Estado activo / inactivo con colores */
+.role-status.active {
+  background-color: #d1fae5; /* verde claro */
+  color: #065f46; /* verde oscuro */
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  display: inline-block;
+  text-align: center;
+  min-width: 60px;
+}
 
+.role-status.inactive {
+  background-color: #fee2e2; /* rojo claro */
+  color: #991b1b; /* rojo oscuro */
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  display: inline-block;
+  text-align: center;
+  min-width: 60px;
+}
 
-.flex gap-2 {
-  position: absolute;
-  bottom: 20px;
-  right: 24px;
-  display: flex;
-  gap: 10px;
-  z-index: 2;
-  background: white;
-  padding: 8px 0;
+/* Modal estilos */
+.ant-modal {
+  border-radius: 0.5rem;
 }
 
 .ant-modal-content {
-  position: relative;
+  border-radius: 0.5rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Botones modal */
+.ant-btn {
+  border-radius: 0.375rem;
+}
+
+.ant-btn-primary {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.ant-btn-primary:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+/* Alert custom */
+.ant-alert {
+  max-width: 600px;
+  margin: 0 auto 1.5rem auto;
+}
+
+/* Texto en modal detalles permisos */
+.space-y-4 p {
+  margin-bottom: 0.75rem;
+}
+
+/* Botón permisos en formulario */
+button.flex.items-center.text-blue-600 {
+  color: #2563eb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 600;
+}
+
+button.flex.items-center.text-blue-600:hover {
+  background-color: #e0e7ff;
+  border-radius: 0.375rem;
+}
+
+/* Botones cancel y submit en modal permisos */
+button.border-gray-300 {
+  border: 1px solid #d1d5db;
+  background-color: white;
+  color: #374151;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+button.border-gray-300:hover {
+  background-color: #f3f4f6;
+}
+
+/* Etiquetas de permisos */
+.flex.items-center.bg-blue-100.text-blue-800 {
+  background-color: #bfdbfe;
+  color: #1e40af;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+/* Botón eliminar permiso en etiqueta */
+.text-red-500 {
+  color: #ef4444;
+  font-weight: bold;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.text-red-500:hover {
+  color: #b91c1c;
 }

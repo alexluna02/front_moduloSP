@@ -1,181 +1,139 @@
-/* usuario.css */
-
-.user-management {
-  background-color: #1a1a1a;
-  color: #fff;
-  min-height: 100vh;
-  padding: 20px;
-  font-family: Arial, sans-serif;
+/* Contenedor principal */
+div[style*="padding: 20px"] {
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
 }
 
-.header {
+/* Título centrado */
+h2 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #007bff;
+  user-select: none;
+}
+
+/* Contenedor para botón nuevo usuario y búsqueda */
+.flex-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  background-color: #2d2d2d;
-  padding: 10px 20px;
-  border-radius: 8px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.header h1 {
-  font-size: 24px;
-  margin: 0;
-  color: #fff;
-}
-
-.header p {
-  font-size: 14px;
-  color: #bbb;
-  margin: 4px 0 0;
-}
-
-.new-user-btn {
-  background-color: #1890ff;
+/* Botón Nuevo Usuario alineado a la derecha debajo del título */
+.fixed-primary-button {
+  background-color: #007bff;
   border: none;
-  color: white;
+  color: white !important;
   padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.new-user-btn:hover {
-  background-color: #40a9ff;
-}
-
-.ant-table {
-  background-color: #fff;
   border-radius: 8px;
-  overflow: hidden;
-  color: #333;
-}
-
-.ant-table-thead>tr>th {
-  background-color: #f5f5f5;
-  font-weight: 500;
-  border-bottom: 1px solid #ddd;
-  padding: 12px;
-  text-align: left;
-}
-
-.ant-table-tbody>tr>td {
-  border-bottom: 1px solid #eee;
-  padding: 12px;
-  text-align: left;
-}
-
-.ant-table-cell {
-  padding: 12px !important;
-}
-
-.action-btn {
-  background: none;
-  border: none;
   cursor: pointer;
-  margin-right: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+  user-select: none;
 }
 
-.action-btn.edit {
-  color: #1890ff;
+.fixed-primary-button:hover,
+.fixed-primary-button:focus {
+  background-color: #0056b3 !important;
+  color: white !important;
 }
 
-.action-btn.delete {
-  color: #ff4d4f;
+/* Campo de búsqueda alineado a la izquierda */
+.ant-input-affix-wrapper {
+  width: 300px !important;
+  max-width: 100%;
+  font-size: 1rem;
+  border-radius: 8px;
+  border-color: #cce0ff;
+  transition: border-color 0.3s ease;
 }
 
-.action-btn:hover {
-  opacity: 0.8;
+.ant-input-affix-wrapper:hover,
+.ant-input-affix-wrapper:focus-within {
+  border-color: #007bff;
+  box-shadow: 0 0 6px #007bff70;
 }
 
-.status {
-  padding: 2px 8px;
+/* Tabla con espacio arriba */
+.ant-table {
+  background: white;
   border-radius: 12px;
-  font-size: 12px;
-  display: inline-flex;
-  align-items: center;
+  box-shadow: 0 0 15px rgb(0 123 255 / 0.1);
+}
+
+/* Estados activo e inactivo */
+.status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  user-select: none;
 }
 
 .status.active {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: #d0ebff;
+  color: #007bff;
 }
 
 .status.inactive {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: #f4f4f4;
+  color: #424242;
 }
 
-.ant-input {
-  border-radius: 4px;
-  height: 32px;
-  width: 200px;
-  background-color: #fff;
-  color: #333;
+/* Botones acciones */
+.ant-btn {
+  border-radius: 6px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.ant-input::placeholder {
-  color: #999;
+.ant-btn:hover,
+.ant-btn:focus {
+  filter: brightness(0.9);
 }
 
-.ant-table-tbody>tr:hover {
-  background-color: #f0f0f0;
-}
-
-.custom-button {
-  background-color: #40a9ff;
-  border-color: #1a1a1a;
-  color: black;
-}
-
-.custom-button:hover,
-.custom-button:focus {
-  background-color: #1890ff;
-  border-color: #1a1a1a;
-  color: black;
-}
-
-
-
+/* Modal: Botones estilos */
 .modal-action-button {
-  background-color: transparent !important; 
-  border: none !important; 
-  color: #333333 !important; 
-  font-weight: bold !important;
-  outline: none !important; 
-  box-shadow: none !important; 
+  border-radius: 8px;
+  font-weight: 600;
 }
 
-.modal-action-button:hover,
-.modal-action-button:focus {
-  background-color: #1890ff !important; 
-  border-color: #1890ff !important;
-  color: white !important; 
-  font-weight: bold !important; 
-  outline: none !important;
-  box-shadow: none !important;
+/* Ajuste para contenedor de los botones Agregar nuevo rol dentro del modal */
+.ant-modal-body > div > div:last-child > button {
+  background-color: #007bff;
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 6px 14px;
+  transition: background-color 0.3s ease;
+  border: none;
+  cursor: pointer;
+  user-select: none;
 }
 
-/* Este bloque aumenta el tama�o de los �conos del orden */
-.ant-table-column-sorter-up,
-.ant-table-column-sorter-down {
-    font-size: 18px !important; /* Cambia 18px por el tama�o deseado */
-    line-height: 1;
-    vertical-align: middle;
-    font-weight: bold;
-    transform: scale(1.3);
+.ant-modal-body > div > div:last-child > button:hover {
+  background-color: #0056b3;
 }
 
-.fixed-primary-button {
-    background-color: #1890ff !important;
-    border-color: #1890ff !important;
-    color: white !important;
-    transition: background-color 0.3s ease;
-}
+/* Responsive: en móviles colocar botones y búsqueda apilados */
+@media (max-width: 600px) {
+  .flex-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-    /* Neutraliza el efecto hover y focus */
-    .fixed-primary-button:hover,
-    .fixed-primary-button:focus {
-        background-color: #40a9ff !important; /* tono m�s claro */
-        border-color: #40a9ff !important;
-    }
+  .fixed-primary-button {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .ant-input-affix-wrapper {
+    width: 100% !important;
+  }
+}

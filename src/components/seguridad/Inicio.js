@@ -34,7 +34,7 @@ const Inicio = () => {
         </aside>
 
         <main className="contenidoindex">
-          <Outlet /> {/* Aquí se renderiza el contenido de cada ruta hija */}
+          <Outlet /> {}
         </main>
       </div>
     </Layout>

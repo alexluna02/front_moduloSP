@@ -1,8 +1,10 @@
+/* inicio.css */
+
 body {
   margin: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #ffffff, #000000);
-  color: #fff;
+  background: linear-gradient(135deg, #f0f4f8, #e0e7ef);
+  color: #333;
 }
 
 .contenedorindex {
@@ -12,52 +14,49 @@ body {
 
 .menuindex {
   width: 260px;
-  background: linear-gradient(135deg, #000000, #ffffff);
-  padding: 2rem 1rem;
-  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.4);
-  border-right: 1px solid #2e2e3e;
+  background: #ffffffcc; /* blanco translúcido */
+  backdrop-filter: blur(10px);
+  box-shadow: 2px 0 15px rgba(0, 123, 255, 0.1);
+  border-right: 1px solid rgba(0, 123, 255, 0.2);
 }
 
 .menuindex h2 {
-  text-align: center;
-  color: #00f2ff;
+  color: #007bff;
+  font-size: 1.6rem;
   margin-bottom: 2rem;
-  font-size: 1.5rem;
+  text-align: center;
   letter-spacing: 1px;
 }
 
 .menuindex ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .menuindex li {
-  padding: 1rem;
-  margin: 0.5rem 0;
+  margin-bottom: 1.5rem;
+}
+
+.menuindex a {
+  text-decoration: none;
+  color: #333;
+  padding: 0.75rem 1rem;
+  display: block;
   border-radius: 10px;
-  background: #fcfcfc;
-  color: #000000;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: background 0.3s ease, transform 0.2s ease;
+  transition: all 0.3s ease;
+  background-color: rgba(0, 123, 255, 0.05);
 }
 
-.menuindex li:hover {
-  background: #00f2ff;
-  color: #000;
-  transform: translateX(5px);
-}
-
-.menuindex li i {
-  margin-right: 10px;
-  font-size: 1.2rem;
+.menuindex a:hover {
+  background-color: rgba(0, 123, 255, 0.15);
+  color: #007bff;
+  font-weight: bold;
+  transform: translateX(6px);
 }
 
 .contenidoindex {
   flex: 1;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(6px);
-  border-radius: 0 0 10px 10px;
+  background: #f9fbfc;
+  box-shadow: inset 0 0 15px rgba(0, 123, 255, 0.05);
 }
