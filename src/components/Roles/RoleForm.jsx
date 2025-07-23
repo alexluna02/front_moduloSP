@@ -2,27 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaEdit, FaTrash, FaInfoCircle, FaSearch, FaLock } from 'react-icons/fa';
 import { Button, Table, Spin, Modal, Input, Form, Select, Checkbox, List } from 'antd';
+import axios from 'axios'; // Importar axios
 import CustomAlert from '../Alert.js';
 import { validarAutorizacion } from '../utils/authUtils';
 import './RoleAdmin.css';
 
 const { Option } = Select;
 
+// Definir la constante API_URL
+const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
+
 // API Functions
 export const listarRoles = async () => {
   try {
-    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles`, { // Usar REACT_APP_API_URL
+    const res = await axios.get(`${API_URL}/roles`, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
     });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Error del servidor: ${res.status} - ${text}`);
-    }
-    const json = await res.json();
-    if (!json.data || !Array.isArray(json.data)) {
+    if (!res.data || !Array.isArray(res.data.data)) {
       throw new Error('Formato de respuesta inválido. No se encontró un array en "data".');
     }
-    return json.data;
+    return res.data.data;
   } catch (err) {
     console.error('Error al cargar roles:', err);
     throw err;
@@ -31,19 +30,13 @@ export const listarRoles = async () => {
 
 export const crearRol = async (roleData) => {
   try {
-    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles`, { // Usar REACT_APP_API_URL
-      method: 'POST',
+    const res = await axios.post(`${API_URL}/roles`, roleData, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify(roleData),
+      }
     });
-    if (!res.ok) {
-      throw new Error('Error en la respuesta del servidor');
-    }
-    const data = await res.json();
-    return { success: true, data };
+    return { success: true, data: res.data };
   } catch (error) {
     console.error('Error al crear el rol:', error);
     return { success: false, error };
@@ -52,18 +45,13 @@ export const crearRol = async (roleData) => {
 
 export const listarPermisos = async () => {
   try {
-    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/permisos`, { // Usar REACT_APP_API_URL
+    const res = await axios.get(`${API_URL}/permisos`, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
     });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Error del servidor: ${res.status} - ${text}`);
-    }
-    const json = await res.json();
-    if (!json.data || !Array.isArray(json.data)) {
+    if (!res.data || !Array.isArray(res.data.data)) {
       throw new Error('Formato de respuesta inválido. No se encontró un array en "data".');
     }
-    return json.data;
+    return res.data.data;
   } catch (err) {
     console.error('Error al cargar permisos:', err);
     throw err;
@@ -72,26 +60,20 @@ export const listarPermisos = async () => {
 
 export const asignarPermisosRol = async (roleId, permisos) => {
   try {
-    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles_permisos/roles/${roleId}/permisos`, { // Usar REACT_APP_API_URL
-      method: 'POST',
+    const res = await axios.post(`${API_URL}/roles_permisos/roles/${roleId}/permisos`, { permisos }, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({ permisos }),
+      }
     });
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Error al asignar permisos: ${res.status} - ${errorText}`);
-    }
-    const data = await res.json();
-    return { success: true, data };
+    return { success: true, data: res.data };
   } catch (error) {
     console.error('Error al asignar permisos:', error);
     return { success: false, error };
   }
 };
 
+// Componente RoleAdmin
 const RoleAdmin = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
@@ -153,15 +135,12 @@ const RoleAdmin = () => {
     const roleData = { nombre_rol: values.nombreRol, descripcion: values.descripcion, estado };
     try {
       if (editingRoleId) {
-        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles/${editingRoleId}`, { // Usar REACT_APP_API_URL
-          method: 'PUT',
+        await axios.put(`${API_URL}/roles/${editingRoleId}`, roleData, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify(roleData),
+          }
         });
-        if (!res.ok) throw new Error('Error al actualizar el rol');
         setAlert({
           type: 'success',
           message: '¡Operación exitosa!',
@@ -184,7 +163,7 @@ const RoleAdmin = () => {
       setAlert({
         type: 'error',
         message: '¡Operación fallida!',
-        description: 'Error en la operación del rol.',
+        description: error.response?.data?.message || 'Error en la operación del rol.',
       });
     } finally {
       setLoading(false);
@@ -212,7 +191,7 @@ const RoleAdmin = () => {
       setAlert({
         type: 'error',
         message: '¡Operación fallida!',
-        description: 'Error al asignar permisos.',
+        description: error.response?.data?.message || 'Error al asignar permisos.',
       });
     } finally {
       setLoading(false);
@@ -222,11 +201,9 @@ const RoleAdmin = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de eliminar este rol?')) {
       try {
-        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles/${id}`, { // Usar REACT_APP_API_URL
-          method: 'DELETE',
+        await axios.delete(`${API_URL}/roles/${id}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
-        if (!res.ok) throw new Error('Error al eliminar el rol');
         setAlert({
           type: 'success',
           message: '¡Operación exitosa!',
@@ -237,7 +214,7 @@ const RoleAdmin = () => {
         setAlert({
           type: 'error',
           message: '¡Operación fallida!',
-          description: 'Error al eliminar el rol.',
+          description: error.response?.data?.message || 'Error al eliminar el rol.',
         });
       }
     }
@@ -250,15 +227,10 @@ const RoleAdmin = () => {
     setIsModalOpen(true);
     setLoadingPermisos(true);
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles_permisos/roles/${role.id_rol}/permisos`, { // Usar REACT_APP_API_URL
+      const res = await axios.get(`${API_URL}/roles_permisos/roles/${role.id_rol}/permisos`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setSelectedPermisos(data.data.map(p => p.id_permiso));
-      } else {
-        setSelectedPermisos([]);
-      }
+      setSelectedPermisos(res.data.data.map(p => p.id_permiso));
     } catch (e) {
       console.error('Error al cargar permisos:', e);
       setSelectedPermisos([]);
@@ -273,15 +245,10 @@ const RoleAdmin = () => {
     setDetalleVisible(true);
     setLoadingPermisos(true);
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/roles_permisos/roles/${role.id_rol}/permisos`, { // Usar REACT_APP_API_URL
+      const res = await axios.get(`${API_URL}/roles_permisos/roles/${role.id_rol}/permisos`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setDetallePermisos(data.data || []);
-      } else {
-        setDetallePermisos([]);
-      }
+      setDetallePermisos(res.data.data || []);
     } catch (e) {
       console.error('Error al cargar permisos:', e);
       setDetallePermisos([]);
