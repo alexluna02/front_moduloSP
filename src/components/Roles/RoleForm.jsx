@@ -127,42 +127,7 @@ const RoleAdmin = () => {
     fetchData();
   }, []);
 
-  // Parsear permisos desde permisoRoles.descripcion
-  let parsedPermisos = [];
-  try {
-    if (permisoRoles?.descripcion) {
-      parsedPermisos = JSON.parse(permisoRoles.descripcion);
-      if (!Array.isArray(parsedPermisos)) {
-        parsedPermisos = [parsedPermisos];
-      }
-    }
-  } catch (e) {
-    console.error('Error al parsear permisoRoles.descripcion:', e);
-    parsedPermisos = [];
-  }
-
-  const puedeCrear = parsedPermisos.includes('C');
-  const puedeEditar = parsedPermisos.includes('U');
-  const puedeEliminar = parsedPermisos.includes('D');
-  const puedeLeer = parsedPermisos.includes('R');
-
   const handleSubmit = async (values) => {
-    if (!puedeCrear && !editingRoleId) {
-      setAlert({
-        type: 'error',
-        message: '¡Acceso denegado!',
-        description: 'No tienes permisos para crear roles.',
-      });
-      return;
-    }
-    if (!puedeEditar && editingRoleId) {
-      setAlert({
-        type: 'error',
-        message: '¡Acceso denegado!',
-        description: 'No tienes permisos para editar roles.',
-      });
-      return;
-    }
     setLoading(true);
     const roleData = { nombre_rol: values.nombreRol, descripcion: values.descripcion, estado };
     try {
@@ -207,14 +172,6 @@ const RoleAdmin = () => {
       setIsPermisosModalOpen(false);
       return;
     }
-    if (!puedeEditar) {
-      setAlert({
-        type: 'error',
-        message: '¡Acceso denegado!',
-        description: 'No tienes permisos para asignar permisos.',
-      });
-      return;
-    }
     setLoading(true);
     try {
       const { success } = await asignarPermisosRol(editingRoleId, selectedPermisos);
@@ -239,14 +196,6 @@ const RoleAdmin = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!puedeEliminar) {
-      setAlert({
-        type: 'error',
-        message: '¡Acceso denegado!',
-        description: 'No tienes permisos para eliminar roles.',
-      });
-      return;
-    }
     if (window.confirm('¿Estás seguro de eliminar este rol?')) {
       try {
         await axios.delete(`${API_URL}/roles/${id}`, {
@@ -269,14 +218,6 @@ const RoleAdmin = () => {
   };
 
   const handleEdit = async (role) => {
-    if (!puedeEditar) {
-      setAlert({
-        type: 'error',
-        message: '¡Acceso denegado!',
-        description: 'No tienes permisos para editar roles.',
-      });
-      return;
-    }
     setEditingRoleId(role.id_rol);
     form.setFieldsValue({ nombreRol: role.nombre_rol, descripcion: role.descripcion });
     setEstado(role.estado);
@@ -296,14 +237,6 @@ const RoleAdmin = () => {
   };
 
   const handleDetails = async (role) => {
-    if (!puedeLeer) {
-      setAlert({
-        type: 'error',
-        message: '¡Acceso denegado!',
-        description: 'No tienes permisos para ver detalles de roles.',
-      });
-      return;
-    }
     setDetalleRol(role);
     setDetallePermisos([]);
     setDetalleVisible(true);
@@ -322,14 +255,6 @@ const RoleAdmin = () => {
   };
 
   const generatePDF = async () => {
-    if (!puedeLeer) {
-      setAlert({
-        type: 'error',
-        message: '¡Acceso denegado!',
-        description: 'No tienes permisos para generar reportes.',
-      });
-      return;
-    }
     const doc = new jsPDF();
     doc.setFontSize(18);
     doc.text('Reporte de Roles', 14, 22);
@@ -374,14 +299,6 @@ const RoleAdmin = () => {
   };
 
   const openModal = () => {
-    if (!puedeCrear) {
-      setAlert({
-        type: 'error',
-        message: '¡Acceso denegado!',
-        description: 'No tienes permisos para crear roles.',
-      });
-      return;
-    }
     setEditingRoleId(null);
     form.resetFields();
     setEstado(true);
@@ -397,14 +314,6 @@ const RoleAdmin = () => {
   };
 
   const openPermisosModal = () => {
-    if (!puedeEditar) {
-      setAlert({
-        type: 'error',
-        message: '¡Acceso denegado!',
-        description: 'No tienes permisos para asignar permisos.',
-      });
-      return;
-    }
     if (!editingRoleId) {
       setSelectedPermisos([]);
     }
@@ -414,6 +323,10 @@ const RoleAdmin = () => {
   const closePermisosModal = () => {
     setIsPermisosModalOpen(false);
   };
+
+  const puedeCrear = permisoRoles?.descripcion?.includes('C') || false;
+  const puedeEditar = permisoRoles?.descripcion?.includes('U') || false;
+  const puedeEliminar = permisoRoles?.descripcion?.includes('D') || false;
 
   const filteredRoles = roles.filter(item =>
     Object.values(item).some(value =>
@@ -441,15 +354,6 @@ const RoleAdmin = () => {
               className="role-action-btn delete"
             />
           )}
-          {puedeLeer && (
-            <Button
-              icon={<FaInfoCircle />}
-              onClick={() => handleDetails(role)}
-              className="flex items-center text-blue-600 hover:bg-blue-50"
-            >
-              Ver
-            </Button>
-          )}
         </div>
       ),
     },
@@ -470,6 +374,19 @@ const RoleAdmin = () => {
       dataIndex: 'descripcion',
       key: 'descripcion',
       sorter: (a, b) => a.descripcion.localeCompare(b.descripcion),
+    },
+    {
+      title: 'Detalles',
+      key: 'detalles',
+      render: (_, role) => (
+        <Button
+          icon={<FaInfoCircle />}
+          onClick={() => handleDetails(role)}
+          className="flex items-center text-blue-600 hover:bg-blue-50"
+        >
+          Ver
+        </Button>
+      ),
     },
     {
       title: 'Estado',
@@ -537,16 +454,14 @@ const RoleAdmin = () => {
               Nuevo Rol
             </Button>
           )}
-          {puedeLeer && (
-            <Button
-              type="default"
-              onClick={generatePDF}
-              icon={<FaFilePdf />}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded"
-            >
-              Generar Reporte
-            </Button>
-          )}
+          <Button
+            type="default"
+            onClick={generatePDF}
+            icon={<FaFilePdf />}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded"
+          >
+            Generar Reporte
+          </Button>
         </div>
         <Input
           placeholder="Buscar..."
@@ -620,16 +535,14 @@ const RoleAdmin = () => {
             </Form.Item>
 
             <div className="flex justify-between items-center">
-              {puedeEditar && (
-                <Button
-                  icon={<FaLock />}
-                  onClick={openPermisosModal}
-                  disabled={!editingRoleId && !form.getFieldValue('nombreRol')}
-                  className="flex items-center text-blue-600 hover:bg-blue-50"
-                >
-                  Permisos
-                </Button>
-              )}
+              <Button
+                icon={<FaLock />}
+                onClick={openPermisosModal}
+                disabled={!editingRoleId && !form.getFieldValue('nombreRol')}
+                className="flex items-center text-blue-600 hover:bg-blue-50"
+              >
+                Permisos
+              </Button>
               <div className="flex gap-2">
                 <Button
                   onClick={closeModal}
