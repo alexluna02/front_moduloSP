@@ -81,7 +81,8 @@ export const asignarPermisosRol = async (roleId, permisos) => {
       body: JSON.stringify({ permisos }),
     });
     if (!res.ok) {
-      throw new Error('Error al asignar permisos');
+      const errorText = await res.text();
+      throw new Error(`Error al asignar permisos: ${res.status} - ${errorText}`);
     }
     const data = await res.json();
     return { success: true, data };
@@ -90,6 +91,7 @@ export const asignarPermisosRol = async (roleId, permisos) => {
     return { success: false, error };
   }
 };
+
 
 const RoleAdmin = () => {
   const navigate = useNavigate();
@@ -243,51 +245,52 @@ const RoleAdmin = () => {
   };
 
   const handleEdit = async (role) => {
-    setEditingRoleId(role.id_rol);
-    form.setFieldsValue({ nombreRol: role.nombre_rol, descripcion: role.descripcion });
-    setEstado(role.estado);
-    setIsModalOpen(true);
-    setLoadingPermisos(true);
-    try {
-      const res = await fetch(`/api/roles_permisos/roles/${role.id_rol}/permisos`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSelectedPermisos(data.map(p => p.id_permiso));
-      } else {
-        setSelectedPermisos([]);
-      }
-    } catch (e) {
-      console.error('Error al cargar permisos:', e);
+  setEditingRoleId(role.id_rol);
+  form.setFieldsValue({ nombreRol: role.nombre_rol, descripcion: role.descripcion });
+  setEstado(role.estado);
+  setIsModalOpen(true);
+  setLoadingPermisos(true);
+  try {
+    const res = await fetch(`/api/roles_permisos/roles/${role.id_rol}/permisos`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setSelectedPermisos(data.data.map(p => p.id_permiso)); // ✅ Corrección
+    } else {
       setSelectedPermisos([]);
-    } finally {
-      setLoadingPermisos(false);
     }
-  };
+  } catch (e) {
+    console.error('Error al cargar permisos:', e);
+    setSelectedPermisos([]);
+  } finally {
+    setLoadingPermisos(false);
+  }
+};
 
-  const handleDetails = async (role) => {
-    setDetalleRol(role);
-    setDetallePermisos([]);
-    setDetalleVisible(true);
-    setLoadingPermisos(true);
-    try {
-      const res = await fetch(`/api/roles_permisos/roles/${role.id_rol}/permisos`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setDetallePermisos(data);
-      } else {
-        setDetallePermisos([]);
-      }
-    } catch (e) {
-      console.error('Error al cargar permisos:', e);
+const handleDetails = async (role) => {
+  setDetalleRol(role);
+  setDetallePermisos([]);
+  setDetalleVisible(true);
+  setLoadingPermisos(true);
+  try {
+    const res = await fetch(`/api/roles_permisos/roles/${role.id_rol}/permisos`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setDetallePermisos(data.data || []); // <-- CORREGIDO
+    } else {
       setDetallePermisos([]);
-    } finally {
-      setLoadingPermisos(false);
     }
-  };
+  } catch (e) {
+    console.error('Error al cargar permisos:', e);
+    setDetallePermisos([]);
+  } finally {
+    setLoadingPermisos(false);
+  }
+};
+
 
   // Modal Handlers
   const openModal = () => {
@@ -520,51 +523,89 @@ const RoleAdmin = () => {
       </Modal>
 
       <Modal
-        title="Asignar Permisos"
-        open={isPermisosModalOpen}
-        onCancel={closePermisosModal}
-        footer={[
-          <Button
-            key="cancel"
-            onClick={closePermisosModal}
-            className="border-gray-300 hover:bg-gray-100"
-          >
-            Cancelar
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            onClick={handlePermisosSubmit}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Guardar
-          </Button>,
-        ]}
-        destroyOnClose
-        className="rounded-lg"
-      >
-        <Spin spinning={loadingPermisos} tip="Cargando permisos...">
-          <List
-            dataSource={permisos}
-            renderItem={permiso => (
-              <List.Item>
-                <Checkbox
-                  checked={selectedPermisos.includes(permiso.id_permiso)}
-                  onChange={e => {
-                    setSelectedPermisos(prev =>
-                      e.target.checked
-                        ? [...prev, permiso.id_permiso]
-                        : prev.filter(id => id !== permiso.id_permiso)
-                    );
+  title="Asignar Permisos"
+  open={isPermisosModalOpen}
+  onCancel={closePermisosModal}
+  footer={[
+    <Button
+      key="cancel"
+      onClick={closePermisosModal}
+      className="border-gray-300 hover:bg-gray-100"
+    >
+      Cancelar
+    </Button>,
+    <Button
+      key="submit"
+      type="primary"
+      onClick={handlePermisosSubmit}
+      className="bg-blue-600 hover:bg-blue-700 text-white"
+    >
+      Guardar
+    </Button>,
+  ]}
+  destroyOnClose
+  className="rounded-lg"
+>
+  <Spin spinning={loadingPermisos} tip="Cargando permisos...">
+    <div className="space-y-4">
+
+      {/* Permisos asignados */}
+      <div>
+        <p className="font-semibold text-gray-700 mb-1">Permisos actuales:</p>
+        <div className="flex flex-wrap gap-2">
+          {selectedPermisos.map(id => {
+            const permiso = permisos.find(p => p.id_permiso === id);
+            return (
+              <span
+                key={id}
+                className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+              >
+                {permiso?.nombre_permiso} ({permiso?.nombre_modulo})
+                <button
+                  onClick={() => {
+                    setSelectedPermisos(prev => prev.filter(pid => pid !== id));
                   }}
+                  className="ml-2 text-red-500 hover:text-red-700 font-bold"
+                  title="Eliminar"
                 >
-                  {permiso.nombre_permiso} ({permiso.nombre_modulo})
-                </Checkbox>
-              </List.Item>
-            )}
-          />
-        </Spin>
-      </Modal>
+                  ×
+                </button>
+              </span>
+            );
+          })}
+          {selectedPermisos.length === 0 && <p className="text-gray-500">Ningún permiso asignado</p>}
+        </div>
+      </div>
+
+      {/* Menú desplegable para agregar */}
+      <div>
+        <p className="font-semibold text-gray-700 mb-1">Agregar nuevo permiso:</p>
+        <Select
+  showSearch
+  placeholder="Selecciona un permiso para agregar"
+  className="w-full"
+  onChange={(value) => {
+    if (value && !selectedPermisos.includes(value)) {
+      setSelectedPermisos([...selectedPermisos, value]);
+    }
+  }}
+  value={undefined} // para que se resetee después de seleccionar
+>
+  {permisos
+    .filter(p => !selectedPermisos.includes(p.id_permiso))
+    .map(permiso => (
+      <Option key={permiso.id_permiso} value={permiso.id_permiso}>
+        {permiso.nombre_permiso} ({permiso.nombre_modulo})
+      </Option>
+    ))}
+</Select>
+
+      </div>
+
+    </div>
+  </Spin>
+</Modal>
+
 
       <Modal
         title="Detalles del Rol"
