@@ -115,6 +115,16 @@ const UserList = () => {
       });
   }, []);
 
+    useEffect(() => {
+        if (alert.message) {
+            const timer = setTimeout(() => {
+                setAlert({ type: '', message: '', description: '' });
+            }, 4000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [alert]);
+
   const filteredUsers = Array.isArray(users) ? users.filter((u) =>
     ['usuario', 'id_usuario', 'nombre'].some((field) =>
       String(u[field]).toLowerCase().includes(searchText.toLowerCase())
@@ -240,7 +250,7 @@ const UserList = () => {
         const res = await axios.post(`${API_URL}/usuarios`, values, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
-        const id_usuario = res.data.id_usuario;
+          const id_usuario = res.data.data.id_usuario;
         await Promise.all(
           values.rol.map(id_rol =>
             axios.post(`${API_URL}/usuarios_roles`, {
