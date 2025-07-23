@@ -6,7 +6,7 @@ import CustomAlert from '../Alert';
 import { useNavigate } from 'react-router-dom';
 import { validarAutorizacion } from '../utils/authUtils';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable'; // Importación explícita
+import autoTable from 'jspdf-autotable';
 
 const { Option } = Select;
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
@@ -53,7 +53,15 @@ const PermisosList = () => {
     }
   };
 
-  const parseLetters = text => text?.match(/[A-Z]/g) || [];
+  const parseLetters = text => {
+    try {
+      const parsed = JSON.parse(text);
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch (e) {
+      console.error('Error al parsear descripcion:', e);
+      return text?.match(/[A-Z]/g) || [];
+    }
+  };
 
   const tagRender = props => {
     const { value, closable, onClose } = props;
@@ -84,9 +92,24 @@ const PermisosList = () => {
     fetchModulos();
   }, []);
 
-  const puedeCrear = permisoPermisos?.descripcion?.includes('C') || false;
-  const puedeEditar = permisoPermisos?.descripcion?.includes('U') || false;
-  const puedeEliminar = permisoPermisos?.descripcion?.includes('D') || false;
+  // Parsear permisos desde permisoPermisos.descripcion
+  let parsedPermisos = [];
+  try {
+    if (permisoPermisos?.descripcion) {
+      parsedPermisos = JSON.parse(permisoPermisos.descripcion);
+      if (!Array.isArray(parsedPermisos)) {
+        parsedPermisos = [parsedPermisos];
+      }
+    }
+  } catch (e) {
+    console.error('Error al parsear permisoPermisos.descripcion:', e);
+    parsedPermisos = [];
+  }
+
+  const puedeCrear = parsedPermisos.includes('C');
+  const puedeEditar = parsedPermisos.includes('U');
+  const puedeEliminar = parsedPermisos.includes('D');
+  const puedeLeer = parsedPermisos.includes('R');
 
   const filteredPermisos = permisos.filter((permiso) =>
     ['nombre_permiso', 'descripcion', 'url_permiso', 'id_modulo'].some((field) =>
@@ -95,6 +118,14 @@ const PermisosList = () => {
   );
 
   const handleDelete = async (id) => {
+    if (!puedeEliminar) {
+      setAlert({
+        type: 'error',
+        message: '¡Acceso denegado!',
+        description: 'No tienes permisos para eliminar permisos.',
+      });
+      return;
+    }
     if (window.confirm('¿Estás seguro de eliminar este permiso?')) {
       setLoading(true);
       try {
@@ -120,13 +151,21 @@ const PermisosList = () => {
   };
 
   const generatePDF = () => {
+    if (!puedeLeer) {
+      setAlert({
+        type: 'error',
+        message: '¡Acceso denegado!',
+        description: 'No tienes permisos para generar reportes.',
+      });
+      return;
+    }
     const doc = new jsPDF();
     doc.setFontSize(18);
     doc.text('Reporte de Permisos', 14, 22);
 
     const tableData = filteredPermisos.map(permiso => {
       const modulo = modulos.find(m => m.id_modulo === permiso.id_modulo);
-      const letras = (permiso.descripcion.match(/[A-Z]/g) || []);
+      const letras = parseLetters(permiso.descripcion);
       const ordenCRUD = ['C', 'R', 'U', 'D'];
       const sorted = ordenCRUD.filter(letter => letras.includes(letter)).join(', ');
       return [
@@ -138,7 +177,6 @@ const PermisosList = () => {
       ];
     });
 
-    // Usar autoTable explícitamente
     autoTable(doc, {
       head: [['ID', 'Nombre', 'Descripción', 'URL Permiso', 'Módulo']],
       body: tableData,
@@ -151,6 +189,22 @@ const PermisosList = () => {
   };
 
   const openModal = (permiso = null) => {
+    if (!puedeCrear && !permiso) {
+      setAlert({
+        type: 'error',
+        message: '¡Acceso denegado!',
+        description: 'No tienes permisos para crear permisos.',
+      });
+      return;
+    }
+    if (!puedeEditar && permiso) {
+      setAlert({
+        type: 'error',
+        message: '¡Acceso denegado!',
+        description: 'No tienes permisos para editar permisos.',
+      });
+      return;
+    }
     setEditingPermiso(permiso);
     if (permiso) {
       form.setFieldsValue({
@@ -164,6 +218,22 @@ const PermisosList = () => {
   };
 
   const handleModalSubmit = async () => {
+    if (!puedeCrear && !editingPermiso) {
+      setAlert({
+        type: 'error',
+        message: '¡Acceso denegado!',
+        description: 'No tienes permisos para crear permisos.',
+      });
+      return;
+    }
+    if (!puedeEditar && editingPermiso) {
+      setAlert({
+        type: 'error',
+        message: '¡Acceso denegado!',
+        description: 'No tienes permisos para editar permisos.',
+      });
+      return;
+    }
     try {
       const values = await form.validateFields();
       setLoading(true);
@@ -204,14 +274,14 @@ const PermisosList = () => {
       title: 'Acciones',
       key: 'acciones',
       render: (_, record) => (
-        <>
+        <div style={{ display: 'flex', gap: 8 }}>
           {puedeEditar && (
-            <Button icon={<FaEdit />} onClick={() => openModal(record)} style={{ marginRight: 8 }} />
+            <Button icon={<FaEdit />} onClick={() => openModal(record)} />
           )}
           {puedeEliminar && (
             <Button icon={<FaTrash />} danger onClick={() => handleDelete(record.id_permiso)} />
           )}
-        </>
+        </div>
       ),
     },
     {
@@ -232,10 +302,10 @@ const PermisosList = () => {
       dataIndex: 'descripcion',
       key: 'descripcion',
       render: texto => {
-        const letras = (texto.match(/[A-Z]/g) || []);
+        const letras = parseLetters(texto);
         const ordenCRUD = ['C', 'R', 'U', 'D'];
-        const sorted = ordenCRUD.filter(letter => letras.includes(letter));
-        return sorted.join(', ');
+        const sorted = ordenCRUD.filter(letter => letras.includes(letter)).join(', ');
+        return sorted;
       }
     },
     {
@@ -251,7 +321,7 @@ const PermisosList = () => {
         const modulo = modulos.find((m) => m.id_modulo === id);
         return modulo ? `${modulo.nombre_modulo} (#${id})` : `#${id}`;
       },
-      sorter: (a, b) => a.id_modulo.localeCompare(b.id_modulo),
+      sorter: (a, b) => a.id_modulo - b.id_modulo,
     },
   ];
 
@@ -273,9 +343,11 @@ const PermisosList = () => {
               Nuevo Permiso
             </Button>
           )}
-          <Button type="default" icon={<FaFilePdf />} onClick={generatePDF}>
-            Generar Reporte
-          </Button>
+          {puedeLeer && (
+            <Button type="default" icon={<FaFilePdf />} onClick={generatePDF}>
+              Generar Reporte
+            </Button>
+          )}
         </div>
         <Input
           placeholder="Buscar permisos..."
