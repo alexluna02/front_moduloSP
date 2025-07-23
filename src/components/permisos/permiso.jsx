@@ -190,11 +190,13 @@ const tagRender = props => {
       dataIndex: 'id_permiso',
       key: 'id_permiso',
       render: (id) => `#${id.toString().padStart(3, '0')}`,
+      sorter: (a, b) => a.id_permiso - b.id_permiso,
     },
     {
       title: 'Nombre',
       dataIndex: 'nombre_permiso',
       key: 'nombre_permiso',
+      sorter: (a, b) => a.nombre_permiso.localeCompare(b.nombre_permiso),
     },
     {
     title: 'Descripcion',
@@ -207,9 +209,7 @@ const tagRender = props => {
   const sorted = ordenCRUD.filter(letter => letras.includes(letter));
   // Devuelve cadena separada por comas
   return sorted.join(', ');
-
 }
-
   },
     {
       title: 'URL Permiso',
@@ -224,6 +224,7 @@ const tagRender = props => {
         const modulo = modulos.find((m) => m.id_modulo === id);
         return modulo ? `${modulo.nombre_modulo} (#${id})` : `#${id}`;
       },
+      sorter: (a, b) => a.id_modulo.localeCompare(b.id_modulo),
     },
   ];
 
