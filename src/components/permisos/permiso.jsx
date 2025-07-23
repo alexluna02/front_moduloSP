@@ -1,46 +1,44 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Button, Input, Modal, Form, Spin } from 'antd';
+import { Table, Button, Input, Modal, Form, Spin, Select } from 'antd';
 import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import CustomAlert from '../Alert';
 import { useNavigate } from 'react-router-dom';
-import { validarAutorizacion } from '../utils/authUtils'; 
-//const { Option } = Select;
+import { validarAutorizacion } from '../utils/authUtils';
+
+const { Option } = Select;
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
 
 const PermisosList = () => {
   const navigate = useNavigate();
-  
-  useEffect(() => {
-    const checkToken = async () => {
-      const { valido } = await validarAutorizacion();
-      if (!valido) {
-        navigate('/login');
-      }
-    };
-    checkToken();
-  }, [navigate]);
 
   const [permisos, setPermisos] = useState([]);
+  const [modulos, setModulos] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [alert, setAlert] = useState({ type: '', message: '', description: '' });
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPermiso, setEditingPermiso] = useState(null);
   const [form] = Form.useForm();
-
-  // Estado para almacenar los permisos procesados
   const [permisoPermisos, setPermisoPermisos] = useState(null);
+
+  useEffect(() => {
+    const checkToken = async () => {
+      const { valido } = await validarAutorizacion();
+      if (!valido) navigate('/login');
+    };
+    checkToken();
+  }, [navigate]);
 
   const fetchPermisos = async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/permisos`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } // Asegúrate de enviar el token
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      setPermisos(res.data.data || res.data); // Ajusta según la estructura de la respuesta
-      // Buscar el permiso para este módulo (Permisos) después de cargar los datos
-      const permiso = (res.data.data || res.data).find(p => p.nombre_permiso?.toLowerCase() === 'permisos');
+      const data = res.data.data || res.data;
+      setPermisos(data);
+      const permiso = data.find(p => p.nombre_permiso?.toLowerCase() === 'permisos');
       setPermisoPermisos(permiso);
     } catch (error) {
       setAlert({
@@ -53,19 +51,33 @@ const PermisosList = () => {
     }
   };
 
+  const fetchModulos = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/modulos`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setModulos(res.data.data || res.data);
+    } catch (error) {
+      setAlert({
+        type: 'error',
+        message: 'Error al cargar módulos',
+        description: error.message,
+      });
+    }
+  };
+
   useEffect(() => {
     fetchPermisos();
+    fetchModulos();
   }, []);
 
-  // Funciones para saber si tiene permiso para cada acción, basadas en permisoPermisos
-  //const puedeLeer = permisoPermisos?.descripcion?.includes('R') || false;
   const puedeCrear = permisoPermisos?.descripcion?.includes('C') || false;
   const puedeEditar = permisoPermisos?.descripcion?.includes('U') || false;
   const puedeEliminar = permisoPermisos?.descripcion?.includes('D') || false;
 
   const filteredPermisos = permisos.filter((permiso) =>
     ['nombre_permiso', 'descripcion', 'url_permiso', 'id_modulo'].some((field) =>
-      permiso[field] ? permiso[field].toString().toLowerCase().includes(searchText.toLowerCase()) : false
+      permiso[field]?.toString().toLowerCase().includes(searchText.toLowerCase())
     )
   );
 
@@ -130,7 +142,6 @@ const PermisosList = () => {
       fetchPermisos();
       setModalOpen(false);
     } catch (error) {
-      console.error('Error en handleModalSubmit:', error);
       setAlert({
         type: 'error',
         message: 'Error al guardar permiso',
@@ -181,6 +192,10 @@ const PermisosList = () => {
       title: 'ID Módulo',
       dataIndex: 'id_modulo',
       key: 'id_modulo',
+      render: (id) => {
+        const modulo = modulos.find((m) => m.id_modulo === id);
+        return modulo ? `${modulo.nombre_modulo} (#${id})` : `#${id}`;
+      },
     },
   ];
 
@@ -243,6 +258,7 @@ const PermisosList = () => {
             >
               <Input.TextArea placeholder="Ej: Permite crear un nuevo usuario" rows={3} />
             </Form.Item>
+
             <Form.Item
               label="URL Permiso"
               name="url_permiso"
@@ -250,12 +266,19 @@ const PermisosList = () => {
             >
               <Input placeholder="Ej: /usuarios/crear" />
             </Form.Item>
+
             <Form.Item
-              label="ID Módulo"
+              label="Módulo"
               name="id_modulo"
-              rules={[{ required: true, message: 'El ID del módulo es obligatorio' }]}
+              rules={[{ required: true, message: 'El módulo es obligatorio' }]}
             >
-              <Input placeholder="Ej: 1" />
+              <Select placeholder="Seleccione un módulo">
+                {modulos.map((modulo) => (
+                  <Option key={modulo.id_modulo} value={modulo.id_modulo}>
+                    {modulo.nombre_modulo}
+                  </Option>
+                ))}
+              </Select>
             </Form.Item>
           </Form>
         </Spin>
