@@ -125,6 +125,16 @@ const UserList = () => {
       });
   }, []);
 
+    useEffect(() => {
+        if (alert.message) {
+            const timer = setTimeout(() => {
+                setAlert({ type: '', message: '', description: '' });
+            }, 4000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [alert]);
+
   // Filtrar búsqueda
   const filteredUsers = Array.isArray(users) ? users.filter((u) =>
     ['usuario', 'id_usuario', 'nombre'].some((field) =>
@@ -243,7 +253,7 @@ const UserList = () => {
         });
       } else {
         const res = await axios.post(`${API_URL}/usuarios`, values);
-        const id_usuario = res.data.id_usuario;
+          const id_usuario = res.data.data.id_usuario;
         await Promise.all(
           values.rol.map(id_rol =>
             axios.post(`${API_URL}/usuarios_roles`, {
@@ -416,7 +426,7 @@ const UserList = () => {
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         onOk={handleModalSubmit}
-        okText={editingUser ? 'Actualizar' : 'Guardar'}
+        okText={editingUser ? 'Guardar' : 'Crear'}
         cancelText="Cancelar"
         destroyOnHidden
         okButtonProps={{ className: 'modal-action-button' }}
