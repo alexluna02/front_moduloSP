@@ -47,49 +47,33 @@ const UserList = () => {
     setUsuarioSeleccionado(null);
   };
 
-  const obtenerRolesUsuario = async (id_usuario) => {
-    try {
-      const res = await axios.get(`${API_URL}/usuarios_roles/${id_usuario}`);
-      return res.data; // Asegúrate de que sea un array de nombres o de objetos con nombre
-    } catch (error) {
-      console.error('Error al obtener roles del usuario:', error);
-      return [];
-    }
-  };
+ const obtenerRolesUsuario = async (id_usuario) => {
+  try {
+    const res = await axios.get(`${API_URL}/usuarios_roles/${id_usuario}`);
+    const roles = res.data.data;  // <-- extraer el array roles dentro de data
+    return Array.isArray(roles) ? roles : [];
+  } catch (error) {
+    console.error('Error al obtener roles del usuario:', error);
+    return [];
+  }
+};
 
-  const obtenerPermisosRoles = async (id_rol) => {
-    try {
-      const res = await axios.get(`${API_URL}/roles_permisos/roles/${id_rol}/permisos`);
-      console.log('Buscando permisos para rol:', id_rol);
-      console.log('Permisos recibidos:', res.data);
-      return res.data; // Debería ser un array de permisos: [{ id_permiso, nombre_permiso }]
-    } catch (error) {
-      console.error('Error al obtener permisos del rol:', error);
-      return [];
-    }
-  };
 
-  const obtenerPermisosPorRoles = async (roles) => {
-    const rolesConPermisos = await Promise.all(
-      roles.map(async (rol) => {
-        const permisos = await obtenerPermisosRoles(rol.id_rol);
-        return { ...rol, permisos };
-      })
-    );
-    return rolesConPermisos;
-  };
+  
+  
 
-  const mostrarModal = async (record) => {
-    const roles = await obtenerRolesUsuario(record.id_usuario);
-    const rolesConPermisos = await obtenerPermisosPorRoles(roles);
 
-    setUsuarioSeleccionado({
-      ...record,
-      roles: rolesConPermisos
-    });
+ const mostrarModal = async (record) => {
+  const roles = await obtenerRolesUsuario(record.id_usuario);
 
-    setVisible(true);
-  };
+  setUsuarioSeleccionado({
+    ...record,
+    roles: roles // solo roles, sin permisos
+  });
+
+  setVisible(true);
+};
+
 
   // Obtener usuarios
   const fetchUsers = async () => {
@@ -226,11 +210,13 @@ const UserList = () => {
 
   const handleModalSubmit = async () => {
     try {
+      
       const values = await form.validateFields();
+      values.estado = values.estado === 'true' || values.estado === true;
       const newRoles = Array.isArray(values.rol) ? values.rol : [];
       const removedRoles = originalRoles.filter(id => !newRoles.includes(id));
       const addedRoles = newRoles.filter(id => !originalRoles.includes(id));
-
+      
       setLoading(true);
 
       if (editingUser) {
@@ -399,33 +385,31 @@ const UserList = () => {
         pagination={{ showSizeChanger: true }}
       />
 
-      <Modal
-        title={`Detalles de ${usuarioSeleccionado?.nombre}`}
-        visible={visible}
-        onCancel={cerrarModal}
-        footer={null}
-      >
-        <p><strong>ID:</strong> {usuarioSeleccionado?.id_usuario}</p>
-        <p><strong>Nombre:</strong> {usuarioSeleccionado?.nombre}</p>
-        <p><strong>Usuario:</strong> {usuarioSeleccionado?.usuario}</p>
-        <p><strong>Estado:</strong> {usuarioSeleccionado?.estado ? 'Activo' : 'Inactivo'}</p>
+          <Modal
+  title={`Detalles de ${usuarioSeleccionado?.nombre}`}
+  visible={visible}
+  onCancel={cerrarModal}
+  footer={null}
+>
+  <p><strong>ID:</strong> {usuarioSeleccionado?.id_usuario}</p>
+  <p><strong>Nombre:</strong> {usuarioSeleccionado?.nombre}</p>
+  <p><strong>Usuario:</strong> {usuarioSeleccionado?.usuario}</p>
+  <p><strong>Estado:</strong> {usuarioSeleccionado?.estado ? 'Activo' : 'Inactivo'}</p>
 
-        <p><strong>Roles y Permisos:</strong></p>
-        {usuarioSeleccionado?.roles?.map((rol) => (
-          <div key={rol.id_rol} style={{ marginBottom: 12 }}>
-            <Tag color="green">{rol.nombre_rol}</Tag>
-            <div style={{ marginLeft: 16 }}>
-              {rol.permisos?.length > 0 ? (
-                rol.permisos.map((permiso) => (
-                  <Tag key={permiso.id_permiso} color="blue">{permiso.nombre_permiso}</Tag>
-                ))
-              ) : (
-                <em style={{ color: '#999' }}>Sin permisos asignados</em>
-              )}
-            </div>
-          </div>
-        ))}
-      </Modal>
+  <p><strong>Roles asignados:</strong></p>
+  {usuarioSeleccionado?.roles?.length > 0 ? (
+    <ul>
+      {usuarioSeleccionado.roles.map((rol) => (
+        <li key={rol.id_rol}>
+          <Tag color="blue">{rol.nombre_rol}</Tag>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <em style={{ color: '#999' }}>Este usuario no tiene roles asignados</em>
+  )}
+</Modal>
+
 
       <Modal
         title={editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
