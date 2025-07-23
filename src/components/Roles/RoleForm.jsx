@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaEdit, FaTrash, FaInfoCircle, FaSearch, FaLock } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaInfoCircle, FaSearch, FaLock, FaPlus } from 'react-icons/fa';
 import { Button, Table, Spin, Modal, Input, Form, Select, Checkbox, List } from 'antd';
 import axios from 'axios'; // Importar axios
 import CustomAlert from '../Alert.js';
@@ -365,7 +365,7 @@ const RoleAdmin = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6">Lista de Roles</h2>
+      <h2>Administrar Roles del Sistema</h2>
 
       <CustomAlert
         type={alert.type}
@@ -374,24 +374,26 @@ const RoleAdmin = () => {
         onClose={() => setAlert({ type: '', message: '', description: '' })}
       />
 
-      <div className="flex justify-between items-center mb-6">
-        {puedeCrear && (
-          <Button
-            type="primary"
-            onClick={openModal}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
-          >
-            Crear
-          </Button>
-        )}
-        <Input
-          placeholder="Buscar..."
-          prefix={<FaSearch className="text-gray-400" />}
-          value={searchText}
-          onChange={e => setSearchText(e.target.value)}
-          className="w-64 rounded-lg border-gray-300 focus:border-blue-500"
-        />
-      </div>
+      <div className="flex justify-between items-center mb-6 w-full">
+  {puedeCrear && (
+    <Button
+      type="primary"
+      onClick={openModal}
+      icon={<FaPlus />}
+      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
+    >
+      Nuevo Rol
+    </Button>
+  )}
+  <Input
+    placeholder="Buscar..."
+    prefix={<FaSearch className="text-gray-400" />}
+    value={searchText}
+    onChange={e => setSearchText(e.target.value)}
+    className="w-64 rounded-lg border-gray-300 focus:border-blue-500 ml-auto"
+  />
+</div>
+
 
       <Table
         dataSource={filteredRoles}
