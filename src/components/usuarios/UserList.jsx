@@ -466,7 +466,7 @@ const UserList = () => {
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         onOk={handleModalSubmit}
-        okText={editingUser ? 'Actualizar' : 'Guardar'}
+        okText={editingUser ? 'Guardar' : 'Crear'}
         cancelText="Cancelar"
         destroyOnClose
         okButtonProps={{ className: 'modal-action-button' }}
