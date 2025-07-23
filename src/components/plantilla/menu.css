@@ -70,6 +70,7 @@
   border-radius: 10px;
   min-width: 180px;
   z-index: 100;
+  font-size: 12px;
 }
 
 .user-section {
@@ -112,4 +113,15 @@
 .logout-btn:hover {
   background-color: #ffe6e6;
   cursor: pointer;
+}
+
+
+.dropdown-menu li {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px; /* Menor altura y espacio horizontal */
+  color: #444;
+  font-size: 12px; /* Más pequeño */
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
 }
