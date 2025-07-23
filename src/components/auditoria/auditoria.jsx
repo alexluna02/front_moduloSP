@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-//import './auditoria.css';
 import { Table, Button, Input, Modal, Form, Spin } from 'antd';
-import { FaSearch } from 'react-icons/fa';
+import { FaSearch, FaFilePdf } from 'react-icons/fa';
 import CustomAlert from '../Alert';
 import { useNavigate } from 'react-router-dom';
-import { validarAutorizacion } from '../utils/authUtils'; 
+import { validarAutorizacion } from '../utils/authUtils';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
 
 const AuditList = () => {
@@ -20,13 +22,14 @@ const AuditList = () => {
     };
     checkToken();
   }, [navigate]);
+
   const [audits, setAudits] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [alert, setAlert] = useState({ type: '', message: '', description: '' });
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [editingAudit, ] = useState(null);
+  const [editingAudit] = useState(null);
   const [selectedDetails, setSelectedDetails] = useState(null);
   const [form] = Form.useForm();
 
@@ -34,7 +37,9 @@ const AuditList = () => {
   const fetchAudits = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/auditoria`);
+      const res = await axios.get(`${API_URL}/auditoria`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setAudits(res.data);
     } catch (error) {
       setAlert({
@@ -58,9 +63,35 @@ const AuditList = () => {
     )
   );
 
- 
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('Reporte de Auditorías', 14, 22);
 
-  
+    const tableData = filteredAudits.map(audit => [
+      `#${audit.id.toString().padStart(3, '0')}`,
+      audit.accion,
+      audit.modulo,
+      audit.tabla,
+      audit.id_usuario || 'Sin usuario',
+      new Date(audit.timestamp).toLocaleString(),
+      audit.nombre_rol,
+      audit.details ? JSON.stringify(audit.details, null, 2) : 'Sin detalles'
+    ]);
+
+    autoTable(doc, {
+      head: [['ID', 'Acción', 'Módulo', 'Tabla', 'ID Usuario', 'Timestamp', 'Rol', 'Detalles']],
+      body: tableData,
+      startY: 30,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [22, 160, 133] },
+      columnStyles: {
+        7: { cellWidth: 50 } // Ajustar ancho de la columna de detalles
+      }
+    });
+
+    doc.save('Reporte_Auditorias.pdf');
+  };
 
   const handleModalSubmit = () => {
     setAlert({
@@ -87,7 +118,6 @@ const AuditList = () => {
   };
 
   const columns = [
-    
     {
       title: 'ID',
       dataIndex: 'id',
@@ -146,7 +176,15 @@ const AuditList = () => {
         onClose={() => setAlert({ type: '', message: '', description: '' })}
       />
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+        <Button
+          type="default"
+          onClick={generatePDF}
+          icon={<FaFilePdf />}
+          style={{ backgroundColor: '#f5f5f5', borderColor: '#d9d9d9' }}
+        >
+          Generar Reporte
+        </Button>
         <Input
           placeholder="Buscar..."
           prefix={<FaSearch />}
@@ -170,7 +208,7 @@ const AuditList = () => {
         onCancel={() => setModalOpen(false)}
         onOk={handleModalSubmit}
         okText="Cerrar"
-        destroyOnHidden
+        destroyOnClose
       >
         <Spin spinning={loading}>
           <Form form={form} layout="vertical">
@@ -205,7 +243,7 @@ const AuditList = () => {
         onCancel={() => setDetailsModalOpen(false)}
         onOk={() => setDetailsModalOpen(false)}
         okText="Cerrar"
-        destroyOnHidden
+        destroyOnClose
       >
         <Spin spinning={loading}>
           <Table

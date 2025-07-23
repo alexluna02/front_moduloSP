@@ -2,19 +2,19 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './usuario.css';
 import { Table, Button, Input, Modal, Form, Select, Spin, Alert, Tag } from 'antd';
-import { FaSearch, FaEdit, FaTrash, FaUserPlus } from 'react-icons/fa';
+import { FaSearch, FaEdit, FaTrash, FaUserPlus, FaFilePdf } from 'react-icons/fa';
 import '@ant-design/icons';
 import CustomAlert from '../Alert';
 import { listarRoles, crearRol } from '../Roles/RoleForm';
 import { useNavigate } from 'react-router-dom';
-import { validarAutorizacion } from '../utils/authUtils'; 
+import { validarAutorizacion } from '../utils/authUtils';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const { Option } = Select;
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
 
 const UserList = () => {
-
-  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,41 +47,33 @@ const UserList = () => {
     setUsuarioSeleccionado(null);
   };
 
- const obtenerRolesUsuario = async (id_usuario) => {
-  try {
-    const res = await axios.get(`${API_URL}/usuarios_roles/${id_usuario}`);
-    const roles = res.data.data;  // <-- extraer el array roles dentro de data
-    return Array.isArray(roles) ? roles : [];
-  } catch (error) {
-    console.error('Error al obtener roles del usuario:', error);
-    return [];
-  }
-};
+  const obtenerRolesUsuario = async (id_usuario) => {
+    try {
+      const res = await axios.get(`${API_URL}/usuarios_roles/${id_usuario}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      const roles = res.data.data;
+      return Array.isArray(roles) ? roles : [];
+    } catch (error) {
+      console.error('Error al obtener roles del usuario:', error);
+      return [];
+    }
+  };
 
+  const mostrarModal = async (record) => {
+    const roles = await obtenerRolesUsuario(record.id_usuario);
+    setUsuarioSeleccionado({
+      ...record,
+      roles: roles
+    });
+    setVisible(true);
+  };
 
-  
-  
-
-
- const mostrarModal = async (record) => {
-  const roles = await obtenerRolesUsuario(record.id_usuario);
-
-  setUsuarioSeleccionado({
-    ...record,
-    roles: roles // solo roles, sin permisos
-  });
-
-  setVisible(true);
-};
-
-
-  // Obtener usuarios
   const fetchUsers = async () => {
     try {
       const res = await axios.get(`${API_URL}/usuarios`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      // Asegurarse de asignar solo el array dentro de data
       if (res.data && Array.isArray(res.data.data)) {
         setUsers(res.data.data);
       } else {
@@ -99,10 +91,8 @@ const UserList = () => {
     }
   };
 
-  // Obtener permisos desde localStorage
   const permisos = JSON.parse(localStorage.getItem('permisos') || '[]');
   const permisoUsuarios = permisos.find(p => p.nombre_permiso?.toLowerCase() === 'usuarios');
-  //const puedeLeer = permisoUsuarios?.descripcion.includes('R');
   const puedeCrear = permisoUsuarios?.descripcion.includes('C');
   const puedeEditar = permisoUsuarios?.descripcion.includes('U');
   const puedeEliminar = permisoUsuarios?.descripcion.includes('D');
@@ -125,7 +115,6 @@ const UserList = () => {
       });
   }, []);
 
-  // Filtrar búsqueda
   const filteredUsers = Array.isArray(users) ? users.filter((u) =>
     ['usuario', 'id_usuario', 'nombre'].some((field) =>
       String(u[field]).toLowerCase().includes(searchText.toLowerCase())
@@ -169,7 +158,9 @@ const UserList = () => {
     if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
       setLoading(true);
       try {
-        await axios.delete(`${API_URL}/usuarios/${id}`);
+        await axios.delete(`${API_URL}/usuarios/${id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
         setAlert({
           type: 'success',
           message: 'Usuario eliminado',
@@ -210,20 +201,22 @@ const UserList = () => {
 
   const handleModalSubmit = async () => {
     try {
-      
       const values = await form.validateFields();
       values.estado = values.estado === 'true' || values.estado === true;
       const newRoles = Array.isArray(values.rol) ? values.rol : [];
       const removedRoles = originalRoles.filter(id => !newRoles.includes(id));
       const addedRoles = newRoles.filter(id => !originalRoles.includes(id));
-      
+
       setLoading(true);
 
       if (editingUser) {
-        await axios.put(`${API_URL}/usuarios/${editingUser.id_usuario}`, values);
+        await axios.put(`${API_URL}/usuarios/${editingUser.id_usuario}`, values, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
         await Promise.all(
           removedRoles.map(id_rol =>
             axios.delete(`${API_URL}/usuarios_roles`, {
+              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
               data: { id_usuario: editingUser.id_usuario, id_rol }
             })
           )
@@ -233,6 +226,8 @@ const UserList = () => {
             axios.post(`${API_URL}/usuarios_roles`, {
               id_usuario: editingUser.id_usuario,
               id_rol
+            }, {
+              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             })
           )
         );
@@ -242,13 +237,17 @@ const UserList = () => {
           description: 'Los datos del usuario fueron actualizados correctamente.',
         });
       } else {
-        const res = await axios.post(`${API_URL}/usuarios`, values);
+        const res = await axios.post(`${API_URL}/usuarios`, values, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
         const id_usuario = res.data.id_usuario;
         await Promise.all(
           values.rol.map(id_rol =>
             axios.post(`${API_URL}/usuarios_roles`, {
               id_usuario,
               id_rol,
+            }, {
+              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             })
           )
         );
@@ -272,6 +271,50 @@ const UserList = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const generatePDF = async () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('Reporte de Usuarios', 14, 22);
+
+    const tableData = await Promise.all(filteredUsers.map(async (user) => {
+      try {
+        const roles = await obtenerRolesUsuario(user.id_usuario);
+        const rolesList = roles.map(r => r.nombre_rol).join(', ') || 'Sin roles';
+        return [
+          `#${user.id_usuario.toString().padStart(3, '0')}`,
+          user.usuario,
+          user.nombre,
+          user.estado ? 'Activo' : 'Inactivo',
+          new Date(user.fecha_creacion).toLocaleString(),
+          rolesList
+        ];
+      } catch (error) {
+        console.error('Error al obtener roles para el usuario:', user.id_usuario, error);
+        return [
+          `#${user.id_usuario.toString().padStart(3, '0')}`,
+          user.usuario,
+          user.nombre,
+          user.estado ? 'Activo' : 'Inactivo',
+          new Date(user.fecha_creacion).toLocaleString(),
+          'Error al cargar roles'
+        ];
+      }
+    }));
+
+    autoTable(doc, {
+      head: [['ID', 'Usuario', 'Nombre', 'Estado', 'Fecha Creación', 'Roles Asignados']],
+      body: tableData,
+      startY: 30,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [22, 160, 133] },
+      columnStyles: {
+        5: { cellWidth: 50 } // Ajustar ancho de la columna de roles
+      }
+    });
+
+    doc.save('Reporte_Usuarios.pdf');
   };
 
   const columns = [
@@ -309,14 +352,14 @@ const UserList = () => {
       dataIndex: 'usuario',
       key: 'usuario',
       sorter: (a, b) => a.usuario.localeCompare(b.usuario),
-      sortDirection: ['ascend', 'descend'],
+      sortDirections: ['ascend', 'descend'],
     },
     {
       title: 'Nombre',
       dataIndex: 'nombre',
       key: 'nombre',
       sorter: (a, b) => a.nombre.localeCompare(b.nombre),
-      sortDirection: ['ascend', 'descend'],
+      sortDirections: ['ascend', 'descend'],
     },
     {
       title: 'Estado',
@@ -364,6 +407,14 @@ const UserList = () => {
               Nuevo Usuario
             </Button>
           )}
+          <Button
+            type="default"
+            icon={<FaFilePdf />}
+            onClick={generatePDF}
+            style={{ marginLeft: 8, backgroundColor: '#f5f5f5', borderColor: '#d9d9d9' }}
+          >
+            Generar Reporte
+          </Button>
         </div>
 
         <div style={{ marginRight: 10 }}>
@@ -385,31 +436,30 @@ const UserList = () => {
         pagination={{ showSizeChanger: true }}
       />
 
-          <Modal
-  title={`Detalles de ${usuarioSeleccionado?.nombre}`}
-  visible={visible}
-  onCancel={cerrarModal}
-  footer={null}
->
-  <p><strong>ID:</strong> {usuarioSeleccionado?.id_usuario}</p>
-  <p><strong>Nombre:</strong> {usuarioSeleccionado?.nombre}</p>
-  <p><strong>Usuario:</strong> {usuarioSeleccionado?.usuario}</p>
-  <p><strong>Estado:</strong> {usuarioSeleccionado?.estado ? 'Activo' : 'Inactivo'}</p>
+      <Modal
+        title={`Detalles de ${usuarioSeleccionado?.nombre}`}
+        visible={visible}
+        onCancel={cerrarModal}
+        footer={null}
+      >
+        <p><strong>ID:</strong> {usuarioSeleccionado?.id_usuario}</p>
+        <p><strong>Nombre:</strong> {usuarioSeleccionado?.nombre}</p>
+        <p><strong>Usuario:</strong> {usuarioSeleccionado?.usuario}</p>
+        <p><strong>Estado:</strong> {usuarioSeleccionado?.estado ? 'Activo' : 'Inactivo'}</p>
 
-  <p><strong>Roles asignados:</strong></p>
-  {usuarioSeleccionado?.roles?.length > 0 ? (
-    <ul>
-      {usuarioSeleccionado.roles.map((rol) => (
-        <li key={rol.id_rol}>
-          <Tag color="blue">{rol.nombre_rol}</Tag>
-        </li>
-      ))}
-    </ul>
-  ) : (
-    <em style={{ color: '#999' }}>Este usuario no tiene roles asignados</em>
-  )}
-</Modal>
-
+        <p><strong>Roles asignados:</strong></p>
+        {usuarioSeleccionado?.roles?.length > 0 ? (
+          <ul>
+            {usuarioSeleccionado.roles.map((rol) => (
+              <li key={rol.id_rol}>
+                <Tag color="blue">{rol.nombre_rol}</Tag>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <em style={{ color: '#999' }}>Este usuario no tiene roles asignados</em>
+        )}
+      </Modal>
 
       <Modal
         title={editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
@@ -418,7 +468,7 @@ const UserList = () => {
         onOk={handleModalSubmit}
         okText={editingUser ? 'Actualizar' : 'Guardar'}
         cancelText="Cancelar"
-        destroyOnHidden
+        destroyOnClose
         okButtonProps={{ className: 'modal-action-button' }}
         cancelButtonProps={{ className: 'modal-action-button' }}
       >
@@ -450,7 +500,7 @@ const UserList = () => {
               label="Contraseña"
               name="contrasena"
               rules={[
-                { required: true, message: 'La contraseña es obligatoria' },
+                { required: !editingUser, message: 'La contraseña es obligatoria' },
                 { min: 6, message: 'La contraseña debe tener al menos 6 caracteres' },
               ]}
             >

@@ -1,15 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaEdit, FaTrash, FaInfoCircle, FaSearch, FaLock, FaPlus } from 'react-icons/fa';
-import { Button, Table, Spin, Modal, Input, Form, Select, Checkbox, List } from 'antd';
-import axios from 'axios'; // Importar axios
+import { FaEdit, FaTrash, FaInfoCircle, FaSearch, FaLock, FaPlus, FaFilePdf } from 'react-icons/fa';
+import { Button, Table, Spin, Modal, Input, Form, Select, Checkbox } from 'antd';
+import axios from 'axios';
 import CustomAlert from '../Alert.js';
 import { validarAutorizacion } from '../utils/authUtils';
 import './RoleAdmin.css';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const { Option } = Select;
 
-// Definir la constante API_URL
 const API_URL = 'https://aplicacion-de-seguridad-v2.onrender.com/api';
 
 // API Functions
@@ -73,7 +75,6 @@ export const asignarPermisosRol = async (roleId, permisos) => {
   }
 };
 
-// Componente RoleAdmin
 const RoleAdmin = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
@@ -95,7 +96,6 @@ const RoleAdmin = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Check authentication
   useEffect(() => {
     const checkToken = async () => {
       const { valido } = await validarAutorizacion();
@@ -106,7 +106,6 @@ const RoleAdmin = () => {
     checkToken();
   }, [navigate]);
 
-  // Fetch roles and permissions
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -129,7 +128,6 @@ const RoleAdmin = () => {
     fetchData();
   }, []);
 
-  // Handlers
   const handleSubmit = async (values) => {
     setLoading(true);
     const roleData = { nombre_rol: values.nombreRol, descripcion: values.descripcion, estado };
@@ -257,7 +255,50 @@ const RoleAdmin = () => {
     }
   };
 
-  // Modal Handlers
+  const generatePDF = async () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('Reporte de Roles', 14, 22);
+
+    const tableData = await Promise.all(filteredRoles.map(async (role) => {
+      try {
+        const res = await axios.get(`${API_URL}/roles_permisos/roles/${role.id_rol}/permisos`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const permisosList = res.data.data.map(p => `${p.nombre_permiso} (${p.nombre_modulo})`).join(', ');
+        return [
+          role.id_rol,
+          role.nombre_rol,
+          role.descripcion || 'Sin descripción',
+          role.estado ? 'Activo' : 'Inactivo',
+          permisosList || 'Ningún permiso asociado'
+        ];
+      } catch (e) {
+        console.error('Error al cargar permisos para el rol:', role.id_rol, e);
+        return [
+          role.id_rol,
+          role.nombre_rol,
+          role.descripcion || 'Sin descripción',
+          role.estado ? 'Activo' : 'Inactivo',
+          'Error al cargar permisos'
+        ];
+      }
+    }));
+
+    autoTable(doc, {
+      head: [['ID', 'Nombre', 'Descripción', 'Estado', 'Permisos Asociados']],
+      body: tableData,
+      startY: 30,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [22, 160, 133] },
+      columnStyles: {
+        4: { cellWidth: 60 } // Ajustar ancho de la columna de permisos
+      }
+    });
+
+    doc.save('Reporte_Roles.pdf');
+  };
+
   const openModal = () => {
     setEditingRoleId(null);
     form.resetFields();
@@ -284,19 +325,16 @@ const RoleAdmin = () => {
     setIsPermisosModalOpen(false);
   };
 
-  // Permissions Check
   const puedeCrear = permisoRoles?.descripcion?.includes('C') || false;
   const puedeEditar = permisoRoles?.descripcion?.includes('U') || false;
   const puedeEliminar = permisoRoles?.descripcion?.includes('D') || false;
 
-  // Filtered Roles
   const filteredRoles = roles.filter(item =>
     Object.values(item).some(value =>
       String(value).toLowerCase().includes(searchText.toLowerCase())
     )
   );
 
-  // Table Columns
   const columns = [
     {
       title: 'Acciones',
@@ -375,25 +413,34 @@ const RoleAdmin = () => {
       />
 
       <div className="flex justify-between items-center mb-6 w-full">
-  {puedeCrear && (
-    <Button
-      type="primary"
-      onClick={openModal}
-      icon={<FaPlus />}
-      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
-    >
-      Nuevo Rol
-    </Button>
-  )}
-  <Input
-    placeholder="Buscar..."
-    prefix={<FaSearch className="text-gray-400" />}
-    value={searchText}
-    onChange={e => setSearchText(e.target.value)}
-    className="w-64 rounded-lg border-gray-300 focus:border-blue-500 ml-auto"
-  />
-</div>
-
+        <div>
+          {puedeCrear && (
+            <Button
+              type="primary"
+              onClick={openModal}
+              icon={<FaPlus />}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mr-2"
+            >
+              Nuevo Rol
+            </Button>
+          )}
+          <Button
+            type="default"
+            onClick={generatePDF}
+            icon={<FaFilePdf />}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded"
+          >
+            Generar Reporte
+          </Button>
+        </div>
+        <Input
+          placeholder="Buscar..."
+          prefix={<FaSearch className="text-gray-400" />}
+          value={searchText}
+          onChange={e => setSearchText(e.target.value)}
+          className="w-64 rounded-lg border-gray-300 focus:border-blue-500"
+        />
+      </div>
 
       <Table
         dataSource={filteredRoles}
@@ -512,7 +559,6 @@ const RoleAdmin = () => {
       >
         <Spin spinning={loadingPermisos} tip="Cargando permisos...">
           <div className="space-y-4">
-            {/* Permisos asignados */}
             <div>
               <p className="font-semibold text-gray-700 mb-1">Permisos actuales:</p>
               <div className="flex flex-wrap gap-2">
@@ -540,7 +586,6 @@ const RoleAdmin = () => {
               </div>
             </div>
 
-            {/* Menú desplegable para agregar */}
             <div>
               <p className="font-semibold text-gray-700 mb-1">Agregar nuevo permiso:</p>
               <Select
