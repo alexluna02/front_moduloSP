@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Button, Input, Modal, Form, Spin, Select } from 'antd';
+import { Table, Button, Input, Modal, Form, Spin, Select,Tag } from 'antd';
 import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import CustomAlert from '../Alert';
 import { useNavigate } from 'react-router-dom';
@@ -50,6 +50,19 @@ const PermisosList = () => {
       setLoading(false);
     }
   };
+
+  // Extrae solo las letras A–Z de un string (p.ej. '{"{"R"}","C"}')
+const parseLetters = text => text?.match(/[A-Z]/g) || [];
+
+// Renderiza cada tag con únicamente su valor (C, R, U, D)
+const tagRender = props => {
+  const { value, closable, onClose } = props;
+  return (
+    <Tag closable={closable} onClose={onClose} style={{ marginRight: 3 }}>
+      {value}
+    </Tag>
+  );
+};
 
   const fetchModulos = async () => {
     try {
@@ -109,7 +122,12 @@ const PermisosList = () => {
   const openModal = (permiso = null) => {
     setEditingPermiso(permiso);
     if (permiso) {
-      form.setFieldsValue(permiso);
+       // convertimos '{"{"R"}","C"}' → ['R','C']
+    form.setFieldsValue({
+      ...permiso,
+     descripcion: parseLetters(permiso.descripcion)
+   });
+
     } else {
       form.resetFields();
     }
@@ -179,10 +197,20 @@ const PermisosList = () => {
       key: 'nombre_permiso',
     },
     {
-      title: 'Descripción',
-      dataIndex: 'descripcion',
-      key: 'descripcion',
-    },
+    title: 'Descripcion',
+    dataIndex: 'descripcion',
+    key: 'descripcion',
+   render: texto => {
+  const letras = (texto.match(/[A-Z]/g) || []);
+  const ordenCRUD = ['C','R','U','D'];
+  // Filtra y ordena según CRUD
+  const sorted = ordenCRUD.filter(letter => letras.includes(letter));
+  // Devuelve cadena separada por comas
+  return sorted.join(', ');
+
+}
+
+  },
     {
       title: 'URL Permiso',
       dataIndex: 'url_permiso',
@@ -238,7 +266,7 @@ const PermisosList = () => {
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         onOk={handleModalSubmit}
-        okText={editingPermiso ? 'Actualizar' : 'Crear'}
+        okText={editingPermiso ? 'Guardar' : 'Crear'}
         destroyOnClose
       >
         <Spin spinning={loading}>
@@ -252,12 +280,23 @@ const PermisosList = () => {
             </Form.Item>
 
             <Form.Item
-              label="Descripción"
-              name="descripcion"
-              rules={[{ required: true, message: 'La descripción es obligatoria' }]}
-            >
-              <Input.TextArea placeholder="Ej: Permite crear un nuevo usuario" rows={3} />
-            </Form.Item>
+  label="Descripción"
+  name="descripcion"
+  rules={[{ required: true, message: 'La descripción es obligatoria' }]}
+>
+
+ <Select
+   mode="multiple"
+   placeholder="Seleccione operación"
+   tagRender={tagRender}
+   allowClear
+ >
+    <Option value="C">Crear (C)</Option>
+    <Option value="R">Leer (R)</Option>
+    <Option value="U">Actualizar (U)</Option>
+    <Option value="D">Eliminar (D)</Option>
+  </Select>
+</Form.Item>
 
             <Form.Item
               label="URL Permiso"
